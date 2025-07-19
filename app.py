@@ -10,7 +10,7 @@ login_manager = LoginManager(app)
 
 @app.route('/')
 def home():
-    return 'Welcome to the Learning Portal!'
+    return 'Welcome to the Learning Portal! This is the home page.'
 
 if __name__ == '__main__':
     app.run(debug=True)
