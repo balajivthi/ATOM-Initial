@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4 text-white">{{ title }}</h1>
+
+    {% if modules %}
+        {% for module in modules %}
+            <div class="p-4 mb-3 glass-effect">
+                <h3 class="text-white">{{ module.title }}</h3>
+                <hr style="color: var(--brand-cyan);">
+                <ul class="list-unstyled">
+                    {% for lesson in module.lessons %}
+                        <li>
+                            <a href="{{ url_for('lesson_detail', course_slug=course_slug, module_slug=module.slug, lesson_slug=lesson.slug) }}" class="fs-5 text-decoration-none" style="color: var(--brand-cyan);">
+                                <i class="bi bi-play-circle-fill me-2"></i>{{ lesson.title }}
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="text-white-50">No lessons found in this module.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="p-4 glass-effect">
+            <p class="text-white fs-4">No modules found for this course yet. Please check back later!</p>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

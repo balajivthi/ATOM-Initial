@@ -1,6 +1,10 @@
-from flask import Flask, render_template, request, flash, redirect, url_for
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import login_user, logout_user, login_required, current_user
+import os
+import markdown
+import yaml
+from flask import Flask, render_template, request, flash, redirect, url_for # type: ignore
+from werkzeug.security import generate_password_hash, check_password_hash # type: ignore
+from flask_login import login_user, logout_user, login_required, current_user # type: ignore
+from extensions import db, login_manager, markdown_converter # <-- Add markdown_converter here
 
 # Import extensions and models
 from extensions import db, login_manager
@@ -64,7 +68,72 @@ def create_app():
     def logout():
         logout_user()
         return redirect(url_for('home'))
+    
+    @app.route('/course/<course_slug>')
+    @login_required
+    def course_detail(course_slug):
+        course_title = course_slug.replace('-', ' ').title()
+        modules = []
+        base_path = os.path.join(app.root_path, 'content', course_slug)
 
+        if os.path.exists(base_path):
+            for module_name in sorted(os.listdir(base_path)):
+                module_path = os.path.join(base_path, module_name)
+                if os.path.isdir(module_path):
+                    lessons = []
+                    for lesson_file in sorted(os.listdir(module_path)):
+                        if lesson_file.endswith('.md'):
+                            lesson_slug = lesson_file.replace('.md', '')
+                            # Correct title slicing for lessons
+                            lesson_title = ' '.join(lesson_slug.split('-')[1:]).title()
+                            lessons.append({'title': lesson_title, 'slug': lesson_slug})
+                
+                    # Correct title slicing for modules
+                    module_title = ' '.join(module_name.split('-')[1:]).title()
+                    modules.append({'title': module_title, 'lessons': lessons, 'slug': module_name})
+        return render_template('course_detail.html', title=course_title, modules=modules, course_slug=course_slug)
+
+    @app.route('/course/<course_slug>/<module_slug>/<lesson_slug>')
+    @login_required
+    def lesson_detail(course_slug, module_slug, lesson_slug):
+        # --- Part 1: Load the specific lesson content ---
+        lesson_path = os.path.join(app.root_path, 'content', course_slug, module_slug, f"{lesson_slug}.md")
+        html_content = ""
+        if os.path.exists(lesson_path):
+            with open(lesson_path, 'r', encoding='utf-8') as f:
+                content_md = f.read()
+                # This uses the markdown_converter instance from extensions.py
+                html_content = markdown_converter.convert(content_md)
+        else:
+            return "Lesson content not found!", 404
+
+        # --- Part 2: Load the ENTIRE course structure for the sidebar ---
+        course_title = course_slug.replace('-', ' ').title()
+        modules = []
+        base_path = os.path.join(app.root_path, 'content', course_slug)
+        if os.path.exists(base_path):
+            for module_item_name in sorted(os.listdir(base_path)):
+                module_path = os.path.join(base_path, module_item_name)
+                if os.path.isdir(module_path):
+                    lessons = []
+                    for lesson_file in sorted(os.listdir(module_path)):
+                        if lesson_file.endswith('.md'):
+                            current_lesson_slug = lesson_file.replace('.md', '')
+                            lesson_title = ' '.join(current_lesson_slug.split('-')[1:]).title()
+                            lessons.append({'title': lesson_title, 'slug': current_lesson_slug})
+
+                    module_title = ' '.join(module_item_name.split('-')[1:]).title()
+                    modules.append({'title': module_title, 'lessons': lessons, 'slug': module_item_name})
+
+        current_lesson_title = ' '.join(lesson_slug.split('-')[1:]).title()
+
+        return render_template('lesson_detail.html',
+                            title=current_lesson_title,
+                            content=html_content,
+                            course_title=course_title,
+                            modules=modules,
+                            course_slug=course_slug,
+                            current_lesson_slug=lesson_slug)
     return app
 
 def create_database(app):

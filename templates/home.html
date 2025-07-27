@@ -1,21 +1,21 @@
 {% extends "layout.html" %}
 {% block content %}
-    <div class="p-5 mb-4 bg-light rounded-3 text-center">
+    <div class="p-5 mb-4 rounded-3 text-center glass-effect">
         <div class="container-fluid py-5">
-            <h1 class="display-5 fw-bold">Welcome to Your Learning Journey</h1>
-            <p class="fs-4">Empowering individuals to skill up and land their dream job. Start learning today, for free.</p>
+            <h1 class="display-5 fw-bold" style="color: black;">Welcome to Your Learning Journey</h1>
+            <p class="fs-4" style="color: black;">Empowering individuals to skill up and land their dream job. Start learning today, for free.</p>
         </div>
     </div>
 
-    <h2 class="mb-4">Available Courses</h2>
+    <h2 class="mb-4" style="color: black;">Available Courses</h2>
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
         {% for course in courses %}
             <div class="col">
-                <div class="card h-100 shadow-sm course-card">
+                <div class="card h-100 course-card glass-effect text-dark">
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title">{{ course.title }}</h5>
                         <p class="card-text flex-grow-1">{{ course.description }}</p>
-                        <a href="#" class="btn btn-success mt-auto">Enroll Now</a>
+                        <a href="{{ url_for('course_detail', course_slug='servicenow-basics') }}" class="btn btn-brand mt-auto">Enroll Now</a>
                     </div>
                 </div>
             </div>
