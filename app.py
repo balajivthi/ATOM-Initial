@@ -1,9 +1,7 @@
 import os
-import markdown
-import yaml
 from flask import Flask, render_template, request, flash, redirect, url_for # type: ignore
 from werkzeug.security import generate_password_hash, check_password_hash # type: ignore
-from flask_login import login_user, logout_user, login_required, current_user # type: ignore
+from flask_login import login_user, logout_user, login_required # type: ignore
 from extensions import db, login_manager, markdown_converter # <-- Add markdown_converter here
 
 # Import extensions and models
