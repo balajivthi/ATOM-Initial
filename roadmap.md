@@ -26,7 +26,8 @@
 - **Rewrote the labs** in Open the Loading Dock (M1L2/L3, M2L1/L2/L3, M3L1/L2/L3, M4L1/L2/L3) to run against the sandboxes, with concrete **expected results** (status codes, fields). Story kept (GlidePort + van partner); the sandbox is framed as the partner's stand-in — “only the URL and credentials change for a real partner.”
 - **ChatGPT lesson** (`servicenow-basics` M10L2): added a **no-key mock path** (point at `https://httpbin.org/post`, read `body.json.prompt`) + free-tier note (Groq/OpenRouter) + why a local Ollama can’t work from a cloud PDI.
 - **Housekeeping:** fixed the one fictional URL in *Automate* (M4L1 illustration); confirmed quizzes carry no fake endpoints.
-- **Parked item (next priority):** connect the PythonAnywhere deploy to git for a `push → pull → Reload` flow (the server was uploaded via zip, so it has no `.git` yet).
+- **Committed & pushed** `fdbdae6` (“Make every lab runnable: real public sandboxes + shared Lab Setup page”) to `origin/Initial-Dev`; also added the **Content & Lab Authoring Playbook** to `project-overview.md`.
+- **Next: PythonAnywhere ↔ git.** Written up in **`GIT-DEPLOY.md`**. The **one-time server conversion is not yet run** (user will): in a PythonAnywhere Bash console, `cd ~/ATOM` → `git init` → add the `https://` remote with a **read-only GitHub PAT** → `git fetch` → `git checkout -f -B Initial-Dev origin/Initial-Dev`. After that the loop is: local `git push` → server `cd ~/ATOM && git pull` → Web tab **Reload**.
 
 ### 🗓️ 12 Oct 2026 — Public preview, gate, feedback, deploy prep, first big commit
 - **Made the portal shareable for tester feedback.**
@@ -44,6 +45,7 @@
 
 ### Standing notes
 - **Authoring playbook (for every future course):** see **`project-overview.md` → Content & Lab Authoring Playbook** — story-first, trademark-safe names, one quiz per module, and the hard rule that **every lab runs for real**: a free PDI for platform work, the verified public sandbox set (`dummyjson` / `httpbin` / Duende OAuth / Open-Meteo) for integrations, and **never** a fictional URL (fallback = two PDIs). New sandboxes go in `content/_lab-setup.md` only.
+- **Deploying to PythonAnywhere:** see **`GIT-DEPLOY.md`** (one-time `git init` on the server + read-only PAT, then `push → pull → Reload`).
 - **Courses live (all seeded, all verified):**
   - `servicenow-basics` — **Introduction to ServiceNow** (10 modules / 18 lessons + 10 quizzes)
   - `make-the-platform-think` — **Make the Platform Think** (5 modules / 15 lessons + 5 quizzes) — was `servicenow-scripting`, renamed to a catchy trademark-safe name

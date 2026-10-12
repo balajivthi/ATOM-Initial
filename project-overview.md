@@ -29,6 +29,7 @@ serve.py            # Waitress production server (reads HOST/PORT)
 start-local.sh      # Start app + Cloudflare quick tunnel, then print the public URL
 stop-local.sh       # Stop the app + tunnel
 DEPLOY.md           # Deployment guide (tunnel / PythonAnywhere / Render) + security checklist
+GIT-DEPLOY.md       # One-time git setup on PythonAnywhere + the push → pull → Reload routine
 requirements.txt    # Python dependencies
 content/            # Markdown course content (course/module/lesson) + shared _lab-setup.md
 templates/          # HTML templates (Jinja2)
@@ -413,6 +414,8 @@ python serve.py
 - **Review finding:** *Open the Loading Dock* used fictional hosts (`api.shipping.example`, `auth.shipping.example`), so no integration lab could run; the ChatGPT lesson required a **paid** OpenAI key. The other four courses are PDI-only and were already runnable.
 - **Fix:** rewrote the integration labs against verified free public sandboxes (DummyJSON, httpbin, Duende demo OAuth, Open-Meteo) with concrete expected results; added the shared **`/lab-setup`** page (top nav + banner on every course page); gave the ChatGPT lesson a **no-key mock path**.
 - **Detail:** see the "Lab Runnability & the Practice Ground" section above.
+- **Shipped:** commit **`fdbdae6`** ("Make every lab runnable…") pushed to `origin/Initial-Dev`; added the **Content & Lab Authoring Playbook** (this file) and **`GIT-DEPLOY.md`**.
+- **Next:** run the one-time `git init` on PythonAnywhere per `GIT-DEPLOY.md` (pending), then the `push → pull → Reload` loop.
 
 ---
 
