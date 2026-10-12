@@ -1,27 +1,65 @@
 {% extends "layout.html" %}
+{% block title %}ATOM Learning Portal{% endblock %}
 {% block content %}
-    <div class="p-5 mb-4 rounded-3 text-center glass-effect">
-        <div class="container-fluid py-5">
-            <h1 class="display-5 fw-bold" style="color: black;">Welcome to Your Learning Journey</h1>
-            <p class="fs-4" style="color: black;">Empowering individuals to skill up and land their dream job. Start learning today, for free.</p>
-        </div>
-    </div>
+    <section class="hero">
+        <h1 class="display-5 fw-bold mb-3">Welcome to Your Learning Journey</h1>
+        <p class="fs-5 mb-4 mx-auto" style="max-width: 640px;">Empowering individuals to skill up and land their dream job. Start learning today, for free.</p>
+        <a href="#courses" class="btn btn-brand btn-lg">Browse Courses</a>
+    </section>
 
-    <h2 class="mb-4" style="color: black;">Available Courses</h2>
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    <h2 class="mb-1" id="courses">Available Courses</h2>
+    <p class="text-muted mb-4" id="course-count">{{ courses|length }} course(s)</p>
+
+    <form method="get" action="{{ url_for('courses.home') }}" class="mb-4" role="search" aria-label="Search courses">
+        <div class="row g-2">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <span class="input-group-text bg-white" style="border-color: var(--border);"><i class="bi bi-search text-muted"></i></span>
+                    <input type="search" class="form-control" id="course-search" name="q" value="{{ query }}" placeholder="Search courses by title or description..." aria-label="Search courses">
+                    {% if query %}
+                        <a href="{{ url_for('courses.home') }}" class="btn btn-secondary-custom" title="Clear search"><i class="bi bi-x-lg"></i></a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <select class="form-select" id="sort-select" name="sort" aria-label="Sort courses" onchange="this.form.submit()">
+                    <option value="title" {% if sort == 'title' %}selected{% endif %}>Sort: A–Z</option>
+                    <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Sort: Newest</option>
+                </select>
+            </div>
+        </div>
+    </form>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4" id="course-grid">
         {% for course in courses %}
             <div class="col">
-                <div class="card h-100 course-card glass-effect text-dark">
+                <div class="card course-card card-hover h-100">
+                    <div class="course-thumb thumb-{{ loop.index }}">
+                        <span class="badge-level level-beginner level-badge">Beginner</span>
+                        <i class="bi bi-book-half thumb-icon" aria-hidden="true"></i>
+                    </div>
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title">{{ course.title }}</h5>
-                        <p class="card-text flex-grow-1">{{ course.description }}</p>
-                        <a href="{{ url_for('course_detail', course_slug='servicenow-basics') }}" class="btn btn-brand mt-auto">Enroll Now</a>
+                        <p class="instructor mt-1">ATOM Learning</p>
+                        <div class="rating text-warning" aria-label="Rated 4.5 out of 5 stars">
+                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-half"></i>
+                            <span class="text-muted">4.5</span>
+                        </div>
+                        <p class="card-text mt-2">{{ course.description }}</p>
+                        <a href="{{ url_for('courses.course_detail', course_slug=course.slug) }}" class="btn btn-brand btn-sm mt-auto">View Course</a>
                     </div>
                 </div>
             </div>
         {% else %}
             <div class="col-12">
-                <p>No courses available at the moment.</p>
+                <div class="no-border-card">
+                    <p class="mb-0">
+                        {% if query %}No courses match "<strong>{{ query }}</strong>".{% else %}No courses available at the moment.{% endif %}
+                    </p>
+                    {% if query %}
+                        <a href="{{ url_for('courses.home') }}" class="btn btn-brand mt-3">Clear Search</a>
+                    {% endif %}
+                </div>
             </div>
         {% endfor %}
     </div>

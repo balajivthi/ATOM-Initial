@@ -1,0 +1,62 @@
+{% extends "layout.html" %}
+{% block title %}{{ title }} | ATOM Learning{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('courses.home') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('courses.course_detail', course_slug=course_slug) }}">{{ course_title }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ title }}</li>
+        </ol>
+    </nav>
+
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="mb-2">{{ quiz.title }}</h1>
+            <p class="text-muted mb-2">Module: <strong>{{ module_title }}</strong></p>
+            <p class="text-muted mb-0">
+                Answer the {{ quiz.questions|length }} questions below, then check your answers.
+                You need <strong>{{ pass_percent }}%</strong> to pass. Explanations are revealed after you submit.
+            </p>
+            {% if meta and meta.attempted %}
+                <div class="mt-3">
+                    {% if meta.passed %}
+                        <span class="badge-status"><i class="bi bi-trophy me-1"></i>Best score: {{ meta.score }} ({{ meta.percent }}%)</span>
+                    {% else %}
+                        <span class="badge-status"><i class="bi bi-arrow-repeat me-1"></i>Best score: {{ meta.score }} ({{ meta.percent }}%) — try again!</span>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <form method="post" action="{{ url_for('quizzes.quiz_submit', course_slug=course_slug, module_slug=module_slug) }}">
+        {% for question in quiz.questions %}
+            <div class="card quiz-card mb-4">
+                <div class="card-body p-4">
+                    <h5 class="quiz-question mb-3">
+                        <span class="badge-status me-2">{{ loop.index }}</span>{{ question.text }}
+                    </h5>
+                    <div class="quiz-options">
+                        {% for letter, option in question.options.items() %}
+                            <div class="form-check quiz-option">
+                                <input class="form-check-input" type="radio"
+                                       name="answer_{{ question.id }}" id="q{{ question.id }}{{ letter }}"
+                                       value="{{ letter }}" required>
+                                <label class="form-check-label" for="q{{ question.id }}{{ letter }}">
+                                    <strong>{{ letter }}.</strong> {{ option }}
+                                </label>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+
+        <div class="d-flex align-items-center gap-3 mb-5">
+            <button type="submit" class="btn btn-brand"><i class="bi bi-check2-square me-1"></i>Check My Answers</button>
+            <a href="{{ url_for('courses.course_detail', course_slug=course_slug) }}" class="btn btn-secondary-custom">Back to Course</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

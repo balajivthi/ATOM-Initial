@@ -4,3 +4,5 @@ Flask-Login
 Flask-SQLAlchemy
 werkzeug
 waitress
+python-dotenv
+Markdown

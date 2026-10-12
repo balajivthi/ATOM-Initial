@@ -1,0 +1,81 @@
+{% extends "layout.html" %}
+{% block title %}{{ title }} Results | ATOM Learning{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('courses.home') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('courses.course_detail', course_slug=course_slug) }}">{{ course_title }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ title }}</li>
+        </ol>
+    </nav>
+
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="mb-3">{{ quiz.title }}</h1>
+            <div class="card quiz-score-card mb-3">
+                <div class="card-body d-flex align-items-center gap-4 flex-wrap p-4">
+                    <div class="quiz-score-circle {{ 'score-pass' if passed else 'score-fail' }}">
+                        <span>{{ percent }}%</span>
+                    </div>
+                    <div>
+                        <h3 class="mb-1">{{ 'Passed' if passed else 'Not passed yet' }}</h3>
+                        <p class="text-muted mb-2">
+                            You scored <strong>{{ score }}/{{ total }}</strong>.
+                            {{ 'Nice work — keep going!' if passed else 'You need at least ' ~ pass_percent ~ '% to pass — review the module and try again.' }}
+                        </p>
+                        {% if meta and meta.attempted and meta.percent >= percent %}
+                            <span class="badge-status"><i class="bi bi-trophy me-1"></i>Best score: {{ meta.score }} ({{ meta.percent }}%)</span>
+                        {% endif %}
+                    </div>
+                    <div class="ms-auto d-flex gap-2">
+                        <a href="{{ url_for('quizzes.quiz_page', course_slug=course_slug, module_slug=module_slug) }}" class="btn btn-brand">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i>Retake Quiz
+                        </a>
+                        <a href="{{ url_for('courses.course_detail', course_slug=course_slug) }}" class="btn btn-secondary-custom">Back to Course</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="h4 mb-3">Review — Answers &amp; Reasoning</h2>
+    {% for result in results %}
+        <div class="card quiz-card mb-4 {{ 'quiz-correct' if result.correct else 'quiz-wrong' }}">
+            <div class="card-body p-4">
+                <h5 class="quiz-question mb-3">
+                    <span class="badge-status me-2">{{ loop.index }}</span>{{ result.text }}
+                </h5>
+                <div class="quiz-options mb-2">
+                    {% for letter, option in result.options.items() %}
+                        {% set is_chosen = letter == result.chosen %}
+                        {% set is_answer = letter == result.correct %}
+                        <div class="quiz-option {{ 'option-correct' if is_answer else '' }} {{ 'option-chosen' if is_chosen and not is_answer else '' }}">
+                            {% if is_answer %}
+                                <i class="bi bi-check-circle-fill me-2" style="color: var(--success);"></i>
+                            {% elif is_chosen %}
+                                <i class="bi bi-x-circle-fill me-2" style="color: var(--danger);"></i>
+                            {% else %}
+                                <i class="bi bi-circle me-2" style="color: var(--border);"></i>
+                            {% endif %}
+                            <strong>{{ letter }}.</strong> {{ option }}
+                            {% if is_answer %}<span class="badge-status ms-2">Correct answer</span>{% endif %}
+                            {% if is_chosen and not is_answer %}<span class="text-muted body-sm ms-2">Your answer</span>{% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="quiz-reasoning">
+                    <strong>Why:</strong> {{ result.explain }}
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+    <div class="mb-5">
+        <a href="{{ url_for('quizzes.quiz_page', course_slug=course_slug, module_slug=module_slug) }}" class="btn btn-brand">
+            <i class="bi bi-arrow-counterclockwise me-1"></i>Retake Quiz
+        </a>
+        <a href="{{ url_for('courses.course_detail', course_slug=course_slug) }}" class="btn btn-secondary-custom">Back to Course</a>
+    </div>
+</div>
+{% endblock %}

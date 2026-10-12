@@ -6,4 +6,4 @@ from markdown import Markdown # <-- Add this import
 # Initialize extensions here
 db = SQLAlchemy()
 login_manager = LoginManager()
-markdown_converter = Markdown() # <-- Create an instance
+markdown_converter = Markdown(extensions=['tables', 'fenced_code']) # <-- Create an instance

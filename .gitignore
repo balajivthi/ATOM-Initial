@@ -1,0 +1,19 @@
+# Environment variables (secrets) — never commit
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.db
+instance/
+
+# OS
+.DS_Store
+
+# Local dev logs
+logs/
+
+# Source training material (kept local, not committed)
+Admin & Dev Aug-Sep/

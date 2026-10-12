@@ -1,146 +1,220 @@
 import os
-from flask import Flask, render_template, request, flash, redirect, url_for # type: ignore
-from werkzeug.security import generate_password_hash, check_password_hash # type: ignore
-from flask_login import login_user, logout_user, login_required # type: ignore
-from extensions import db, login_manager, markdown_converter # <-- Add markdown_converter here
-
-# Import extensions and models
+import re
+from flask import Flask, render_template, request, session, redirect, url_for
+from flask_login import current_user
+from dotenv import load_dotenv
 from extensions import db, login_manager
 from models.models import User, Course
+from routes.auth import auth_bp
+from routes.courses import courses_bp
+from routes.enrollments import enrollments_bp
+from routes.progress import progress_bp
+from routes.quizzes import quizzes_bp
+from routes.admin import admin_bp
+from routes.profile import profile_bp
+from routes.gate import gate_bp
+from routes.feedback import feedback_bp
+from utils import slugify, load_course_structure
 
 def create_app():
     """Create and configure an instance of the Flask application."""
+    load_dotenv()
+
+    secret_key = os.environ.get('SECRET_KEY')
+    if not secret_key:
+        secret_key = 'a-strong-and-unique-secret-key'
+        print("WARNING: SECRET_KEY not set — using an insecure default. Set SECRET_KEY in a .env file or environment.")
+
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = 'a-strong-and-unique-secret-key'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///learning_portal.db'
+    app.config['SECRET_KEY'] = secret_key
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///learning_portal.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+    app.config['PORT'] = int(os.environ.get('PORT', 5000))
+    app.config['HOST'] = os.environ.get('HOST', '0.0.0.0')
+
+    # Optional shared-password gate. When set, every page (except the gate and
+    # static assets) requires this password once per browser session.
+    app.config['SITE_PASSWORD'] = os.environ.get('SITE_PASSWORD', '')
 
     # Initialize extensions with the app instance
     db.init_app(app)
     login_manager.init_app(app)
-    login_manager.login_view = 'login'
+    login_manager.login_view = 'auth.login'
 
     # Define the user loader function
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    # --- ROUTES ---
-    @app.route('/')
-    def home():
-        courses = Course.query.all()
-        return render_template('home.html', courses=courses)
+    # Register blueprint routes
+    app.register_blueprint(courses_bp)
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(enrollments_bp)
+    app.register_blueprint(progress_bp)
+    app.register_blueprint(quizzes_bp)
+    app.register_blueprint(admin_bp)
+    app.register_blueprint(profile_bp)
+    app.register_blueprint(gate_bp)
+    app.register_blueprint(feedback_bp)
 
-    @app.route('/register', methods=['GET', 'POST'])
-    def register():
-        if request.method == 'POST':
-            username = request.form.get('username')
-            password = request.form.get('password')
-            user = User.query.filter_by(username=username).first()
-            if user:
-                flash('Username already exists.')
-                return redirect(url_for('register'))
-            hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-            new_user = User(username=username, password=hashed_password)
-            db.session.add(new_user)
-            db.session.commit()
-            login_user(new_user)
-            return redirect(url_for('home'))
-        return render_template('register.html')
+    # --- Optional shared-password gate -------------------------------------
+    # If SITE_PASSWORD is set, block everything until the visitor unlocks it.
+    @app.before_request
+    def require_site_password():
+        configured = app.config.get('SITE_PASSWORD')
+        if not configured:
+            return None
+        # Always allow static assets, the gate itself, and Flask-Login internals.
+        if request.endpoint in ('static', 'gate.gate'):
+            return None
+        if request.path.startswith('/static/'):
+            return None
+        if session.get('site_unlocked'):
+            return None
+        return redirect(url_for('gate.gate', next=request.path))
 
-    @app.route('/login', methods=['GET', 'POST'])
-    def login():
-        if request.method == 'POST':
-            username = request.form.get('username')
-            password = request.form.get('password')
-            user = User.query.filter_by(username=username).first()
-            if not user or not check_password_hash(user.password, password):
-                flash('Please check your login details and try again.')
-                return redirect(url_for('login'))
-            login_user(user, remember=True)
-            return redirect(url_for('home'))
-        return render_template('login.html')
+    # Make current_user available in every template context
+    @app.context_processor
+    def inject_user():
+        return {'current_user': current_user}
 
-    @app.route('/logout')
-    @login_required
-    def logout():
-        logout_user()
-        return redirect(url_for('home'))
-    
-    @app.route('/course/<course_slug>')
-    @login_required
-    def course_detail(course_slug):
-        course_title = course_slug.replace('-', ' ').title()
-        modules = []
-        base_path = os.path.join(app.root_path, 'content', course_slug)
+    # --- Error handlers ---
+    @app.errorhandler(403)
+    def forbidden(e):
+        return render_template('error.html', code=403,
+                               message="You don't have permission to access this page."), 403
 
-        if os.path.exists(base_path):
-            for module_name in sorted(os.listdir(base_path)):
-                module_path = os.path.join(base_path, module_name)
-                if os.path.isdir(module_path):
-                    lessons = []
-                    for lesson_file in sorted(os.listdir(module_path)):
-                        if lesson_file.endswith('.md'):
-                            lesson_slug = lesson_file.replace('.md', '')
-                            # Correct title slicing for lessons
-                            lesson_title = ' '.join(lesson_slug.split('-')[1:]).title()
-                            lessons.append({'title': lesson_title, 'slug': lesson_slug})
-                
-                    # Correct title slicing for modules
-                    module_title = ' '.join(module_name.split('-')[1:]).title()
-                    modules.append({'title': module_title, 'lessons': lessons, 'slug': module_name})
-        return render_template('course_detail.html', title=course_title, modules=modules, course_slug=course_slug)
+    @app.errorhandler(404)
+    def not_found(e):
+        return render_template('error.html', code=404,
+                               message="Sorry, the page you're looking for doesn't exist."), 404
 
-    @app.route('/course/<course_slug>/<module_slug>/<lesson_slug>')
-    @login_required
-    def lesson_detail(course_slug, module_slug, lesson_slug):
-        # --- Part 1: Load the specific lesson content ---
-        lesson_path = os.path.join(app.root_path, 'content', course_slug, module_slug, f"{lesson_slug}.md")
-        html_content = ""
-        if os.path.exists(lesson_path):
-            with open(lesson_path, 'r', encoding='utf-8') as f:
-                content_md = f.read()
-                # This uses the markdown_converter instance from extensions.py
-                html_content = markdown_converter.convert(content_md)
-        else:
-            return "Lesson content not found!", 404
+    @app.errorhandler(500)
+    def server_error(e):
+        return render_template('error.html', code=500,
+                               message="Something went wrong on our end. Please try again later."), 500
 
-        # --- Part 2: Load the ENTIRE course structure for the sidebar ---
-        course_title = course_slug.replace('-', ' ').title()
-        modules = []
-        base_path = os.path.join(app.root_path, 'content', course_slug)
-        if os.path.exists(base_path):
-            for module_item_name in sorted(os.listdir(base_path)):
-                module_path = os.path.join(base_path, module_item_name)
-                if os.path.isdir(module_path):
-                    lessons = []
-                    for lesson_file in sorted(os.listdir(module_path)):
-                        if lesson_file.endswith('.md'):
-                            current_lesson_slug = lesson_file.replace('.md', '')
-                            lesson_title = ' '.join(current_lesson_slug.split('-')[1:]).title()
-                            lessons.append({'title': lesson_title, 'slug': current_lesson_slug})
-
-                    module_title = ' '.join(module_item_name.split('-')[1:]).title()
-                    modules.append({'title': module_title, 'lessons': lessons, 'slug': module_item_name})
-
-        current_lesson_title = ' '.join(lesson_slug.split('-')[1:]).title()
-
-        return render_template('lesson_detail.html',
-                            title=current_lesson_title,
-                            content=html_content,
-                            course_title=course_title,
-                            modules=modules,
-                            course_slug=course_slug,
-                            current_lesson_slug=lesson_slug)
     return app
 
 def create_database(app):
     with app.app_context():
         db.create_all()
-        if not Course.query.first():
-            course1 = Course(title='Introduction to Python', description='Learn the basics of Python programming.')
-            course2 = Course(title='Web Development with Flask', description='Build your first web application with Flask.')
-            course3 = Course(title='Understanding Databases with SQLAlchemy', description='Master data management in your apps.')
-            db.session.add_all([course1, course2, course3])
+
+        inspector = db.inspect(db.engine)
+        course_cols = [c['name'] for c in inspector.get_columns('course')]
+
+        # --- Lightweight migration: add Course.slug if missing ---
+        if 'slug' not in course_cols:
+            db.session.execute(db.text("ALTER TABLE course ADD COLUMN slug VARCHAR(120)"))
             db.session.commit()
-            print("Database created and sample courses added.")
+            print("Added 'slug' column to course table.")
+
+        # --- Lightweight migration: add User.is_admin + User.created_at if missing ---
+        user_cols = [c['name'] for c in inspector.get_columns('user')]
+        if 'is_admin' not in user_cols:
+            db.session.execute(db.text("ALTER TABLE user ADD COLUMN is_admin BOOLEAN DEFAULT 0 NOT NULL"))
+            print("Added 'is_admin' column to user table.")
+        if 'created_at' not in user_cols:
+            db.session.execute(db.text("ALTER TABLE user ADD COLUMN created_at DATETIME"))
+            print("Added 'created_at' column to user table.")
+        db.session.commit()
+
+        # Backfill created_at for any users still missing it.
+        from datetime import datetime
+        for user in User.query.filter(User.created_at.is_(None)).all():
+            user.created_at = datetime.utcnow()
+            db.session.add(user)
+        db.session.commit()
+
+        # --- Admin bootstrapping: promote users named in ADMIN_USERNAMES (or the first user) ---
+        admin_names = [n.strip() for n in os.environ.get('ADMIN_USERNAMES', '').split(',') if n.strip()]
+        if not admin_names and not User.query.filter_by(is_admin=True).first():
+            first = User.query.order_by(User.id).first()
+            if first:
+                admin_names = [first.username]
+        if admin_names:
+            for name in admin_names:
+                user = User.query.filter_by(username=name).first()
+                if user and not user.is_admin:
+                    user.is_admin = True
+                    db.session.add(user)
+                    print(f"Promoted '{name}' to admin.")
+            db.session.commit()
+
+        # Backfill slugs for any courses still missing one.
+        for course in Course.query.filter(Course.slug.is_(None)).all():
+            course.slug = slugify(course.title)
+            db.session.add(course)
+        db.session.commit()
+
+        # Auto-seed missing courses from the content/ directory (idempotent).
+        KNOWN_COURSES = {
+            'servicenow-basics': {
+                'title': 'Introduction to ServiceNow',
+                'description': ('Your first day at GlidePort Logistics. Understand the platform, set up users, '
+                                'build the Delivery App, import agent data, send notifications, and launch '
+                                'self-service with the catalog and Virtual Agent.'),
+            },
+            'make-the-platform-think': {
+                'title': 'Make the Platform Think',
+                'description': ('Give the GlidePort Delivery App some brains. Learn JavaScript on the platform, '
+                                'read and write delivery records with GlideRecord, automate order processing '
+                                'with Business Rules, then make the browser and the catalog react with Client '
+                                'Scripts.'),
+            },
+            'build-your-own-api': {
+                'title': 'Build Your Own API',
+                'description': ('Open the GlidePort Delivery App to other systems. Package reusable logic in '
+                                'Script Includes, answer live questions from the browser with the AJAX pattern, '
+                                'and expose delivery data through your own secured Scripted REST endpoints.'),
+            },
+            'automate-the-delivery-line': {
+                'title': 'Automate the Delivery Line',
+                'description': ("Stop hand-holding the delivery journey. Build visual, logged automations that "
+                                "react to records and the clock, fork and loop, wait for real-world events, reuse "
+                                "subflows and custom actions, and fail gracefully — so the whole delivery line runs "
+                                "itself from order to doorstep."),
+            },
+            'open-the-loading-dock': {
+                'title': 'Open the Loading Dock',
+                'description': ("Connect the Delivery App to the outside world. Call partner systems with secure "
+                                "outbound requests, prove GlidePort's identity with credentials and OAuth, receive "
+                                "real-time events and batch manifests, reuse prebuilt integration blocks, and watch "
+                                "every wire so nothing fails silently."),
+            },
+        }
+        content_root = os.path.join(app.root_path, 'content')
+        if os.path.isdir(content_root):
+            for folder in sorted(os.listdir(content_root)):
+                folder_path = os.path.join(content_root, folder)
+                if not os.path.isdir(folder_path) or folder.startswith('.'):
+                    continue
+                slug = slugify(folder)
+                existing = Course.query.filter_by(slug=slug).first()
+                if existing:
+                    # One-time refresh: update known courses that still carry a legacy default description.
+                    info = KNOWN_COURSES.get(slug)
+                    legacy = 'Learn the ServiceNow platform from the ground up: navigation, forms, and more.'
+                    if info and existing.description == legacy:
+                        existing.description = info['description']
+                        db.session.add(existing)
+                    continue
+                info = KNOWN_COURSES.get(slug)
+                if info:
+                    db.session.add(Course(title=info['title'], description=info['description'], slug=slug))
+                else:
+                    title = ' '.join(folder.replace('-', ' ').split()).title()
+                    modules = load_course_structure(slug)
+                    lessons = sum(len(m['lessons']) for m in modules)
+                    db.session.add(Course(title=title,
+                                          description=f"{len(modules)} module(s), {lessons} lessons.", slug=slug))
+            db.session.commit()
+
+        # Sanitize any invalid slugs left over from earlier seeds.
+        for course in Course.query.all():
+            cleaned = slugify(course.slug)
+            if cleaned != course.slug:
+                course.slug = cleaned
+                db.session.add(course)
+        db.session.commit()

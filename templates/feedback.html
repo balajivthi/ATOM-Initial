@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+{% block title %}Feedback | ATOM Learning{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <h1 class="mb-1">Send Feedback</h1>
+        <p class="text-muted">Found a bug, a typo, or have an idea? Tell us — it goes straight to the team.</p>
+
+        <div class="card card-elevated mb-4">
+            <div class="card-body p-4">
+                <form method="post">
+                    <input type="hidden" name="page" id="pageField">
+                    <div class="mb-3">
+                        <label for="category" class="form-label">Type</label>
+                        <select class="form-select" id="category" name="category">
+                            {% for value, label in categories %}
+                                <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="message" class="form-label">Your feedback</label>
+                        <textarea class="form-control" id="message" name="message" rows="5"
+                                  maxlength="4000" placeholder="What did you notice? What were you doing?" required></textarea>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-brand">
+                            <i class="bi bi-send me-1"></i>Submit feedback
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <h2 class="h5 mb-3">Your recent feedback</h2>
+        {% if mine %}
+            <div class="list-group mb-4">
+                {% for item in mine %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="badge {% if item.category == 'bug' %}text-bg-danger{% elif item.category == 'idea' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">
+                                {{ category_labels.get(item.category, item.category) }}
+                            </span>
+                            <small class="text-muted">{{ item.created_at.strftime('%d %b %Y, %H:%M') }}</small>
+                        </div>
+                        <p class="mb-0">{{ item.message }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-border-card mb-4">
+                <p class="mb-0 text-muted">You haven't sent any feedback yet.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+<script>
+    document.getElementById('pageField').value = document.referrer || location.href;
+</script>
+{% endblock %}

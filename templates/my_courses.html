@@ -1,0 +1,59 @@
+{% extends "layout.html" %}
+{% block title %}My Courses | ATOM Learning{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-2">My Courses</h1>
+    <p class="text-muted mb-4">Courses you are enrolled in.</p>
+
+    {% if items %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for item in items %}
+                {% set enrollment = item.enrollment %}
+                {% set course = enrollment.course %}
+                {% set done_course = item.percent == 100 %}
+                <div class="col">
+                    <div class="card course-card card-hover h-100">
+                        <div class="course-thumb thumb-{{ (enrollment.id % 4) or 4 }}">
+                            {% if done_course %}
+                                <span class="badge-level level-beginner level-badge"><i class="bi bi-award"></i> Completed</span>
+                            {% else %}
+                                <span class="badge-status level-badge"><i class="bi bi-check-circle me-1"></i>Enrolled</span>
+                            {% endif %}
+                            <i class="bi bi-book-half thumb-icon" aria-hidden="true"></i>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">{{ course.title }}</h5>
+                            <p class="instructor mt-1">Enrolled {{ enrollment.enrolled_at.strftime('%b %d, %Y') }}</p>
+                            <p class="card-text mt-2">{{ course.description }}</p>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="text-muted body-sm">{{ item.completed }}/{{ item.total }} lessons</span>
+                                    <span class="text-muted body-sm">{{ item.percent }}%</span>
+                                </div>
+                                <div class="progress" role="progressbar" aria-label="{{ course.title }} progress" aria-valuenow="{{ item.percent }}" aria-valuemin="0" aria-valuemax="100">
+                                    <div class="progress-bar {% if done_course %}bg-success{% endif %}" style="width: {{ item.percent }}%"></div>
+                                </div>
+                            </div>
+                            <div class="mt-auto d-flex gap-2">
+                                <a href="{{ url_for('courses.course_detail', course_slug=course.slug) }}" class="btn btn-brand btn-sm flex-grow-1">
+                                    {% if done_course %}Review Course{% else %}Continue Learning{% endif %}
+                                </a>
+                                <form method="post" action="{{ url_for('enrollments.unenroll', course_slug=course.slug) }}">
+                                    <button type="submit" class="btn btn-secondary-custom btn-sm" title="Unenroll" aria-label="Unenroll">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="no-border-card">
+            <p class="mb-2">You aren't enrolled in any courses yet.</p>
+            <a href="{{ url_for('courses.home') }}" class="btn btn-brand">Browse Courses</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

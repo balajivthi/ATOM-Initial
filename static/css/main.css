@@ -1,0 +1,438 @@
+/* ==========================================================
+   ATOM Learning Portal — Design Tokens & Base Styles
+   Base unit: 8px grid.  Light theme (spec §1–§3)
+   ========================================================== */
+
+:root {
+    /* Primaries */
+    --primary: #2F5BE7;
+    --primary-dark: #1E3FA0;
+    --success: #10B981;
+    --warning: #F97316;
+
+    /* Neutrals */
+    --text-dark: #0F172A;      /* Slate 900 */
+    --text-medium: #475569;    /* Slate 600 */
+    --text-light: #94A3B8;     /* Slate 400 */
+    --bg-light: #F8FAFC;       /* Slate 50  */
+    --bg-medium: #F1F5F9;      /* Slate 100 */
+    --white: #FFFFFF;
+    --border: #E2E8F0;         /* Slate 200 */
+
+    /* Accents */
+    --accent-purple: #A855F7;
+    --accent-teal: #06B6D4;
+    --danger: #EF4444;
+
+    /* Typography */
+    --font-heading: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+
+    /* Spacing (8px grid) */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
+    --space-3xl: 64px;
+
+    /* Radii */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-pill: 20px;
+
+    /* Shadows */
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 10px 25px rgba(0, 0, 0, 0.10);
+    --shadow-elevated: 0 20px 40px rgba(0, 0, 0, 0.15);
+    --shadow-btn: 0 4px 12px rgba(47, 91, 231, 0.3);
+
+    --navbar-height: 64px;
+}
+
+/* ---------- Base ---------- */
+body {
+    font-family: var(--font-body);
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+    font-size: 16px;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex-grow: 1;
+    padding-bottom: var(--space-3xl);
+}
+
+h1, h2, h3, h4, h5 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: var(--text-dark);
+}
+
+h1 { font-size: 48px; }
+h2 { font-size: 36px; }
+h3 { font-size: 28px; font-weight: 600; }
+h4 { font-size: 24px; font-weight: 600; }
+h5 { font-size: 20px; font-weight: 500; line-height: 1.4; }
+
+p, .body-large { font-size: 18px; }
+.body-sm { font-size: 14px; line-height: 1.5; }
+.text-muted { color: var(--text-medium) !important; }
+
+a {
+    color: var(--primary);
+    text-decoration: none;
+}
+a:hover { text-decoration: underline; }
+
+/* ---------- Navbar (§4.3) ---------- */
+.navbar {
+    height: var(--navbar-height);
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0 1rem;
+}
+.navbar .navbar-brand {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--primary);
+    font-size: 1.25rem;
+    letter-spacing: -0.02em;
+}
+.navbar .navbar-brand i { margin-right: var(--space-sm); }
+.navbar-nav { gap: var(--space-lg); }
+.navbar-nav .nav-link {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-medium);
+    padding: var(--space-sm) 0;
+}
+.navbar-nav .nav-link:hover { color: var(--primary); }
+.navbar-text { color: var(--text-medium) !important; font-weight: 500; }
+
+/* ---------- Buttons (§4.4) ---------- */
+.btn {
+    font-family: var(--font-body);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.4;
+    padding: 12px 24px;
+    border-radius: var(--radius-sm);
+    border: none;
+    transition: all 0.3s ease;
+}
+.btn-brand {
+    background-color: var(--primary);
+    color: var(--white) !important;
+    padding: 12px 32px;
+}
+.btn-brand:hover {
+    background-color: var(--primary-dark);
+    box-shadow: var(--shadow-btn);
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+.btn-brand:active {
+    background-color: var(--primary-dark);
+    outline-offset: -2px;
+}
+.btn-secondary-custom {
+    background: var(--bg-medium);
+    color: var(--primary);
+    border: 1px solid var(--border);
+}
+.btn-secondary-custom:hover {
+    background: var(--border);
+    color: var(--primary);
+    text-decoration: none;
+}
+.btn-outline-brand {
+    background: transparent;
+    color: var(--primary);
+    border: 2px solid var(--primary);
+}
+.btn-outline-brand:hover {
+    background: rgba(47, 91, 231, 0.1);
+    color: var(--primary);
+    text-decoration: none;
+}
+.btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+.btn-sm { padding: 8px 16px; font-size: 14px; }
+
+/* ---------- Inputs (§4.5) ---------- */
+.form-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-dark);
+    margin-bottom: 8px;
+}
+.form-label .required::before { content: "* "; color: var(--danger); }
+.form-control {
+    height: 44px;
+    padding: 12px 16px;
+    font-size: 16px;
+    color: var(--text-dark);
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+.form-control::placeholder { color: var(--text-light); }
+.form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(47, 91, 231, 0.1);
+}
+
+/* ---------- Cards & Containers (§4.7) ---------- */
+.card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
+    transition: all 0.3s ease;
+}
+.card-hover:hover {
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-2px);
+}
+.card-elevated { box-shadow: var(--shadow-elevated); }
+.no-border-card {
+    background: var(--bg-light);
+    border-radius: var(--radius-md);
+    padding: 20px;
+}
+
+/* ---------- Badges & Tags (§4.8) ---------- */
+.badge-status {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+    border: 1px solid var(--success);
+    padding: 4px 12px;
+    border-radius: var(--radius-pill);
+    font-size: 12px;
+    font-weight: 500;
+}
+.badge-tag {
+    background: var(--bg-medium);
+    color: var(--text-medium);
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+.badge-level {
+    padding: 6px 12px;
+    border-radius: var(--space-sm);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--white);
+}
+.badge-level.level-beginner { background: var(--success); }
+.badge-level.level-intermediate { background: var(--warning); }
+.badge-level.level-advanced { background: var(--accent-purple); }
+
+/* ---------- Progress (§4.6) ---------- */
+.progress {
+    height: 4px;
+    background: var(--bg-medium);
+    border-radius: var(--space-xs);
+}
+.progress .progress-bar {
+    background: var(--success);
+    border-radius: var(--space-xs);
+}
+.progress.progress-lg { height: 8px; }
+.progress-striped::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: var(--space-xs);
+    background: repeating-linear-gradient(45deg,
+        rgba(255, 255, 255, 0.2) 0 6px,
+        transparent 6px 12px);
+}
+.progress { position: relative; overflow: hidden; }
+
+/* ---------- Hero (§4.1) ---------- */
+.hero {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    border-radius: var(--radius-md);
+    padding: var(--space-3xl) var(--space-2xl);
+    text-align: center;
+    margin-bottom: var(--space-2xl);
+}
+.hero h1 { color: var(--white); }
+.hero p { color: rgba(255, 255, 255, 0.9); font-weight: 500; }
+.hero .btn-brand { background: var(--white); color: var(--primary) !important; }
+.hero .btn-brand:hover { background: var(--bg-medium); }
+
+/* ---------- Course Cards (§4.2) ---------- */
+.course-card { overflow: hidden; border: 1px solid var(--border); }
+.course-thumb {
+    position: relative;
+    height: 170px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent-teal) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.course-thumb .thumb-icon { font-size: 48px; color: rgba(255, 255, 255, 0.9); }
+.course-thumb .level-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 1;
+}
+.course-thumb.thumb-1 { background: linear-gradient(135deg, var(--primary), var(--accent-purple)); }
+.course-thumb.thumb-2 { background: linear-gradient(135deg, var(--success), var(--accent-teal)); }
+.course-thumb.thumb-3 { background: linear-gradient(135deg, var(--warning), var(--danger)); }
+.course-thumb.thumb-4 { background: linear-gradient(135deg, var(--accent-purple), var(--primary)); }
+.course-card .card-body { padding: var(--space-md); }
+.course-card .card-title { font-size: 18px; font-weight: 600; color: var(--text-dark); }
+.course-card .instructor { font-size: 14px; color: var(--text-medium); }
+.course-card .rating { font-size: 14px; }
+.course-card .price { font-size: 16px; font-weight: 600; color: var(--primary); }
+
+/* ---------- Curriculum (course detail) ---------- */
+.curriculum-card { border: 1px solid var(--border); }
+.curriculum-list { list-style: none; padding-left: 0; margin-bottom: 0; }
+.curriculum-list li { padding: var(--space-sm) 0; border-bottom: 1px solid var(--border); }
+.curriculum-list li:last-child { border-bottom: none; }
+.curriculum-list li a { color: var(--text-medium); font-size: 16px; }
+.curriculum-list li a:hover { color: var(--primary); text-decoration: none; }
+.curriculum-list li a i { color: var(--primary); margin-right: var(--space-sm); }
+
+/* ---------- Lesson layout ---------- */
+.lesson-content { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-md); }
+.sidebar-panel { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-md); }
+.sidebar-panel .accordion-item { border: 1px solid var(--border); border-radius: 8px !important; overflow: hidden; }
+.sidebar-panel .accordion-button { background: var(--bg-medium); color: var(--text-dark); font-weight: 500; box-shadow: none; }
+.sidebar-panel .accordion-button:not(.collapsed) { color: var(--primary); }
+.sidebar-panel .lesson-item a { color: var(--text-medium); }
+.sidebar-panel .lesson-item a:hover { color: var(--primary); text-decoration: none; }
+.sidebar-panel .lesson-item.active a { color: var(--primary); font-weight: 600; }
+.sidebar-panel .lesson-item.active { background: rgba(47, 91, 231, 0.08); border-radius: 6px; }
+
+/* Lesson markdown content typography */
+.lesson-content h1, .lesson-content h2, .lesson-content h3 { margin-top: 1.5em; }
+.lesson-content p { color: var(--text-medium); }
+.lesson-content pre, .lesson-content code {
+    font-family: var(--font-mono);
+    background: var(--bg-medium);
+    border-radius: 6px;
+}
+.lesson-content pre { padding: var(--space-md); overflow-x: auto; }
+.lesson-content blockquote {
+    border-left: 4px solid var(--primary);
+    padding-left: var(--space-md);
+    color: var(--text-medium);
+    font-style: italic;
+}
+
+/* Tabs (lesson interaction panel) */
+.interaction-panel .nav-tabs .nav-link {
+    color: var(--text-medium);
+    font-weight: 500;
+    border: none;
+    border-bottom: 2px solid transparent;
+}
+.interaction-panel .nav-tabs .nav-link.active {
+    color: var(--primary);
+    border-bottom: 2px solid var(--primary);
+    background: transparent;
+}
+.interaction-panel .tab-pane textarea {
+    background: var(--bg-light);
+    border: 1px solid var(--border);
+    color: var(--text-dark);
+}
+.interaction-panel .tab-pane textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(47, 91, 231, 0.1);
+}
+
+/* ---------- Footer ---------- */
+.footer {
+    background: var(--white);
+    border-top: 1px solid var(--border);
+    color: var(--text-light);
+    font-size: 14px;
+    padding: var(--space-md) 0;
+    text-align: center;
+}
+
+/* ---------- Alerts ---------- */
+.alert { border-radius: var(--radius-sm); border: 1px solid var(--border); }
+
+/* ---------- Scrollbar (subtle) ---------- */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-light); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: var(--space-xs); }
+::-webkit-scrollbar-thumb:hover { background: var(--text-light); }
+
+/* ---------- Focus states (a11y §10) ---------- */
+a:focus-visible, .btn:focus-visible, .form-control:focus-visible,
+.accordion-button:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* ---------- Responsive (§8) ---------- */
+@media (max-width: 640px) {
+    h1 { font-size: 32px; }
+    h2 { font-size: 28px; }
+    .hero { padding: var(--space-2xl) var(--space-lg); }
+    .hero h1 { font-size: 32px; }
+    .navbar-nav { gap: var(--space-sm); }
+}
+@media (min-width: 641px) and (max-width: 1024px) {
+    .hero h1 { font-size: 40px; }
+}
+/* ---------- Quizzes ---------- */
+.quiz-card { border: 1px solid var(--border); border-radius: var(--radius-md); }
+.quiz-card .quiz-question { font-size: 17px; font-weight: 600; color: var(--text-dark); }
+.quiz-option {
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--space-xs);
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.quiz-option:hover { border-color: var(--primary); background: var(--bg-light); }
+.form-check.quiz-option .form-check-input:checked ~ .form-check-label { font-weight: 500; }
+.module-quiz-row {
+    border-top: 1px dashed var(--border);
+    padding: var(--space-md) var(--space-sm) var(--space-sm);
+    margin-top: var(--space-sm);
+}
+.quiz-score-circle {
+    width: 96px; height: 96px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; font-weight: 700; color: var(--white); flex-shrink: 0;
+}
+.quiz-score-circle.score-pass { background: var(--success); }
+.quiz-score-circle.score-fail { background: var(--danger); }
+.quiz-score-card { border: 1px solid var(--border); border-radius: var(--radius-md); }
+.quiz-correct { border-left: 4px solid var(--success); }
+.quiz-wrong { border-left: 4px solid var(--danger); }
+.option-correct {
+    border-color: var(--success);
+    background: rgba(16, 185, 129, 0.08);
+}
+.option-chosen {
+    border-color: var(--danger);
+    background: rgba(239, 68, 68, 0.06);
+}
+.quiz-reasoning {
+    background: var(--bg-light);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-md);
+    color: var(--text-dark);
+}

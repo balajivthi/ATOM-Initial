@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Private Preview | ATOM Learning</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <main class="container">
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-6 col-lg-5">
+                <div class="card card-elevated">
+                    <div class="card-body p-4">
+                        <div class="text-center mb-3">
+                            <i class="bi bi-shield-lock" style="font-size: 2.25rem; color: var(--color-primary, #2F5BE7);"></i>
+                        </div>
+                        <h2 class="text-center mb-2">Private Preview</h2>
+                        <p class="text-center text-muted mb-4">
+                            This site is shared with a few testers. Enter the access password to continue.
+                        </p>
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-danger">{{ message }}</div>
+                            {% endfor %}
+                        {% endwith %}
+                        <form method="post">
+                            <div class="mb-4">
+                                <label for="password" class="form-label">Access password</label>
+                                <input type="password" class="form-control" id="password" name="password"
+                                       autocomplete="current-password" autofocus required>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-brand">
+                                    <i class="bi bi-box-arrow-in-right me-1"></i>Unlock
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <p class="text-center text-muted mt-3 small">
+                    ATOM Learning Portal &middot; private preview
+                </p>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

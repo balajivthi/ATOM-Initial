@@ -1,0 +1,57 @@
+{% extends "layout.html" %}
+{% block title %}Manage Courses | ATOM Learning{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h1 class="mb-1">Manage Courses</h1>
+            <p class="text-muted mb-0">Create, edit, delete, or seed courses.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('feedback.inbox') }}" class="btn btn-secondary-custom"><i class="bi bi-chat-left-text me-1"></i>Feedback Inbox</a>
+            <form method="post" action="{{ url_for('admin.seed_courses') }}">
+                <button type="submit" class="btn btn-secondary-custom"><i class="bi bi-magic me-1"></i>Seed from Content</button>
+            </form>
+            <a href="{{ url_for('admin.create_course') }}" class="btn btn-brand"><i class="bi bi-plus-lg me-1"></i>New Course</a>
+        </div>
+    </div>
+
+    {% if courses %}
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">Title</th>
+                            <th scope="col">Slug</th>
+                            <th scope="col">Description</th>
+                            <th scope="col" class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for course in courses %}
+                            <tr>
+                                <td class="fw-medium">{{ course.title }}</td>
+                                <td><code>{{ course.slug }}</code></td>
+                                <td class="text-muted" style="max-width: 320px;">{{ course.description }}</td>
+                                <td class="text-end">
+                                    <a href="{{ url_for('courses.course_detail', course_slug=course.slug) }}" class="btn btn-outline-brand btn-sm" title="View"><i class="bi bi-eye"></i></a>
+                                    <a href="{{ url_for('admin.edit_course', course_id=course.id) }}" class="btn btn-secondary-custom btn-sm" title="Edit"><i class="bi bi-pencil"></i></a>
+                                    <form method="post" action="{{ url_for('admin.delete_course', course_id=course.id) }}" class="d-inline"
+                                          onsubmit="return confirm('Delete course &quot;{{ course.title }}&quot;? This also removes enrollments and progress for it.');">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="no-border-card">
+            <p class="mb-0">No courses yet. Create one or seed from the content directory.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,63 +1,109 @@
 {% extends "layout.html" %}
+{% block title %}{{ title }} | {{ course_title }}{% endblock %}
 {% block content %}
-<div class="row lesson-row mt-4">
+<div class="row mt-4">
+    <div class="col-lg-8 mb-4">
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('courses.home') }}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('courses.course_detail', course_slug=course_slug) }}">{{ course_title }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ title }}</li>
+            </ol>
+        </nav>
 
-    <div class="col-lg-8">
-        <div class="glass-effect page-height-panel">
-            
-            <div class="scrollable-lesson-content">
-                <h1 class="text-white mb-4">{{ title }}</h1>
-                <hr style="color: var(--brand-cyan);">
-                <div class="lesson-content">
-                    {{ content|safe }}
-                </div>
+        <div class="lesson-content p-lg-4 p-3 interaction-panel">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                <h1 class="mb-3">{{ title }}</h1>
+                {% if is_completed %}
+                    <span class="badge-status"><i class="bi bi-check-circle me-1"></i>Completed</span>
+                {% endif %}
+            </div>
+            <hr style="border-color: var(--border);">
+            <div class="lesson-body">
+                {{ content|safe }}
             </div>
 
-            <div class="static-interaction-panel">
-                <ul class="nav nav-tabs" id="myTab" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="qa-tab" data-bs-toggle="tab" data-bs-target="#qa-tab-pane" type="button" role="tab" style="color: var(--light-text);">Q&A</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="notes-tab" data-bs-toggle="tab" data-bs-target="#notes-tab-pane" type="button" role="tab" style="color: var(--light-text);">Notes</button>
-                    </li>
-                </ul>
-                <div class="tab-content pt-3" id="myTabContent">
-                    <div class="tab-pane fade show active" id="qa-tab-pane" role="tabpanel">
-                        <p class="text-white-50">Q&A feature coming soon!</p>
-                    </div>
-                    <div class="tab-pane fade" id="notes-tab-pane" role="tabpanel">
-                        <textarea class="form-control mb-2" rows="3" placeholder="Take notes..." style="background-color: rgba(0,0,0,0.2); color: white; border-color: rgba(255,255,255,0.2);"></textarea>
-                        <button class="btn btn-brand btn-sm">Save Notes</button>
-                    </div>
+            {% if is_completed %}
+                <form method="post" action="{{ url_for('progress.reset_lesson', course_slug=course_slug, module_slug=module_slug, lesson_slug=current_lesson_slug) }}" class="mt-4">
+                    <button type="submit" class="btn btn-secondary-custom"><i class="bi bi-arrow-counterclockwise me-1"></i>Mark as Incomplete</button>
+                </form>
+            {% else %}
+                <form method="post" action="{{ url_for('progress.complete_lesson', course_slug=course_slug, module_slug=module_slug, lesson_slug=current_lesson_slug) }}" class="mt-4">
+                    <button type="submit" class="btn btn-brand"><i class="bi bi-check-lg me-1"></i>Mark as Complete</button>
+                </form>
+            {% endif %}
+
+            <ul class="nav nav-tabs mt-4" id="myTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="qa-tab" data-bs-toggle="tab" data-bs-target="#qa-tab-pane" type="button" role="tab">Q&amp;A</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="notes-tab" data-bs-toggle="tab" data-bs-target="#notes-tab-pane" type="button" role="tab">Notes</button>
+                </li>
+            </ul>
+            <div class="tab-content py-3" id="myTabContent">
+                <div class="tab-pane fade show active" id="qa-tab-pane" role="tabpanel">
+                    <p class="text-muted mb-0">Q&amp;A feature coming soon!</p>
+                </div>
+                <div class="tab-pane fade" id="notes-tab-pane" role="tabpanel">
+                    <textarea class="form-control mb-2" rows="3" placeholder="Take notes..." aria-label="Lesson notes"></textarea>
+                    <button class="btn btn-brand btn-sm">Save Notes</button>
                 </div>
             </div>
-
         </div>
     </div>
 
     <div class="col-lg-4">
-        <div class="glass-effect page-height-panel scrollable-sidebar">
-            <h4 class="text-white mb-3">Course Content</h4>
+        <div class="sidebar-panel p-3" role="complementary" aria-label="Course content">
+            <h4 class="mb-3">Course Content</h4>
+            <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="text-muted body-sm">Course progress</span>
+                    <span class="text-muted body-sm">{{ percent }}%</span>
+                </div>
+                <div class="progress" role="progressbar" aria-label="Course progress" aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-bar" style="width: {{ percent }}%"></div>
+                </div>
+            </div>
             {% for module in modules %}
                 <div class="accordion mb-2" id="accordion-{{ loop.index }}">
-                    <div class="accordion-item" style="background: none; border: 1px solid rgba(255,255,255,0.2); border-radius: 0.5rem;">
+                    <div class="accordion-item">
                         <h2 class="accordion-header" id="heading-{{ loop.index }}">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ loop.index }}" style="background: rgba(255,255,255,0.1); color: var(--light-text); border: none; box-shadow: none;">
+                            <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ loop.index }}" aria-expanded="{{ 'true' if loop.first else 'false' }}" aria-controls="collapse-{{ loop.index }}">
                                 {{ module.title }}
                             </button>
                         </h2>
-                        <div id="collapse-{{ loop.index }}" class="accordion-collapse collapse">
+                        <div id="collapse-{{ loop.index }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}" aria-labelledby="heading-{{ loop.index }}">
                             <div class="accordion-body py-2">
-                                <ul class="list-unstyled">
+                                <ul class="list-unstyled mb-0">
                                     {% for lesson in module.lessons %}
                                         {% set is_active = (lesson.slug == current_lesson_slug) %}
-                                        <li class="p-2 rounded {% if is_active %}bg-primary{% endif %}">
-                                            <a href="{{ url_for('lesson_detail', course_slug=course_slug, module_slug=module.slug, lesson_slug=lesson.slug) }}" class="text-decoration-none {% if is_active %}text-white{% else %}text-info{% endif %}">
-                                                <i class="bi bi-play-circle-fill me-2"></i>{{ lesson.title }}
+                                        {% set is_done = lesson.slug in done %}
+                                        <li class="lesson-item p-2 {% if is_active %}active{% endif %}">
+                                            <a href="{{ url_for('courses.lesson_detail', course_slug=course_slug, module_slug=module.slug, lesson_slug=lesson.slug) }}">
+                                                {% if is_done %}
+                                                    <i class="bi bi-check-circle-fill me-1" style="color: var(--success);"></i>
+                                                {% else %}
+                                                    <i class="bi bi-play-circle-fill me-1"></i>
+                                                {% endif %}
+                                                {{ lesson.title }}
                                             </a>
                                         </li>
                                     {% endfor %}
+                                    {% if module.has_quiz %}
+                                        {% set q = quizzes.get(module.slug) %}
+                                        <li class="lesson-item p-2">
+                                            <a href="{{ url_for('quizzes.quiz_page', course_slug=course_slug, module_slug=module.slug) }}">
+                                                <i class="bi bi-patch-question me-1" style="color: var(--primary);"></i>
+                                                Module Quiz
+                                                {% if q and q.attempted %}
+                                                    <span class="body-sm ms-1" style="color: {{ 'var(--success)' if q.passed else 'var(--warning)' }};">
+                                                        · {{ q.score }} ({{ q.percent }}%)
+                                                    </span>
+                                                {% endif %}
+                                            </a>
+                                        </li>
+                                    {% endif %}
                                 </ul>
                             </div>
                         </div>

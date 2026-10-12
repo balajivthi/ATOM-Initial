@@ -1,23 +1,29 @@
 {% extends "layout.html" %}
+{% block title %}Register | ATOM Learning{% endblock %}
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card glass-effect">
-            <div class="card-body">
-                <h2 class="card-title text-center mb-4 text-white">Create an Account</h2>
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 col-lg-5">
+        <div class="card card-elevated">
+            <div class="card-body p-4">
+                <h2 class="text-center mb-2">Create an Account</h2>
+                <p class="text-center text-muted mb-4">Start your learning journey today</p>
                 <form method="post">
                     <div class="mb-3">
-                        <label for="username" class="form-label text-white-50">Username</label>
-                        <input type="text" class="form-control" id="username" name="username" required>
+                        <label for="username" class="form-label"><span class="required">Username</span></label>
+                        <input type="text" class="form-control" id="username" name="username" autocomplete="username" required>
                     </div>
-                    <div class="mb-3">
-                        <label for="password" class="form-label text-white-50">Password</label>
-                        <input type="password" class="form-control" id="password" name="password" required>
+                    <div class="mb-4">
+                        <label for="password" class="form-label"><span class="required">Password</span></label>
+                        <input type="password" class="form-control" id="password" name="password" autocomplete="new-password" required>
                     </div>
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">Register</button>
+                        <button type="submit" class="btn btn-brand">Register</button>
                     </div>
                 </form>
+                <p class="text-center mt-3 mb-0">
+                    <span class="text-muted">Already have an account?</span>
+                    <a href="{{ url_for('auth.login') }}">Login</a>
+                </p>
             </div>
         </div>
     </div>

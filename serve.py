@@ -5,6 +5,7 @@ app = create_app()
 create_database(app)
 
 if __name__ == '__main__':
-    # Change the port number in this line
-    print("Starting production server on http://0.0.0.0:5001")
-    serve(app, host='0.0.0.0', port=5001, threads=4)  # Use 4 threads for better performance
+    port = app.config['PORT'] or 5001
+    host = app.config['HOST']
+    print(f"Starting production server on http://{host}:{port}")
+    serve(app, host=host, port=port, threads=4)  # Use 4 threads for better performance
