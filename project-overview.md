@@ -21,9 +21,14 @@ A Python-based **public learning portal** for user registration, course browsing
 ```
 app.py               # Main entry point (app factory + blueprint registration + error handlers)
 extensions.py       # Centralized Flask extensions (db, login_manager, markdown_converter)
-models/models.py    # Database models (User, Course, CourseEnrollment, LessonProgress)
+models/models.py    # Database models (User, Course, CourseEnrollment, LessonProgress, QuizAttempt, Feedback)
 utils.py            # Shared helpers (slugify, load_course_structure, course_progress)
-routes/             # Blueprint route files (auth, courses, enrollments, progress, admin, profile)
+routes/             # Blueprint route files (auth, courses, enrollments, progress, quizzes, admin, profile, gate, feedback)
+wsgi.py             # Production WSGI entry point (Waitress / gunicorn / PythonAnywhere)
+serve.py            # Waitress production server (reads HOST/PORT)
+start-local.sh      # Start app + Cloudflare quick tunnel, then print the public URL
+stop-local.sh       # Stop the app + tunnel
+DEPLOY.md           # Deployment guide (tunnel / PythonAnywhere / Render) + security checklist
 requirements.txt    # Python dependencies
 content/            # Markdown course content (organized by course/module/lesson)
 templates/          # HTML templates (Jinja2)
@@ -41,6 +46,7 @@ static/             # CSS (main.css), JS, images
   - created_at (datetime, member-since)
   - enrollments (relationship to CourseEnrollment)
   - progress (relationship to LessonProgress)
+  - quiz_attempts (relationship to QuizAttempt)
 
 - **Course**: db.Model
   - id (primary key)
@@ -63,6 +69,24 @@ static/             # CSS (main.css), JS, images
   - lesson_slug (String)
   - completed_at (datetime, default now)
   - Unique constraint on (user_id, course_id, module_slug, lesson_slug)
+
+- **QuizAttempt**: db.Model
+  - id (primary key)
+  - user_id (FK -> user.id)
+  - course_id (FK -> course.id)
+  - module_slug (String)
+  - score / total (Integer)
+  - passed (Boolean; pass mark 60%)
+  - created_at (datetime, default now)
+
+- **Feedback**: db.Model
+  - id (primary key)
+  - user_id (FK -> user.id, nullable)
+  - category (String: general | bug | idea | content)
+  - message (Text)
+  - page (String; where the tester was when they wrote it)
+  - status (String: new | read)
+  - created_at (datetime, default now)
 
 #### Flask Extensions (extensions.py)
 - `db`: SQLAlchemy ORM instance
@@ -98,14 +122,25 @@ Routes are modularized into Flask blueprints under `routes/`:
   - **POST /admin/courses/seed**: Auto-register missing courses from `content/`
 - **routes/profile.py** (`profile`)
   - **GET /profile**: User dashboard — avatar, member-since, admin badge, stat cards (courses / in progress / completed / lessons), overall progress bar, per-course progress with Continue/Review CTA
+- **routes/quizzes.py** (`quizzes`)
+  - **GET/POST /course/<course_slug>/<module_slug>/quiz**: Module quiz — renders questions, grades on submit, reveals answers + reasoning (pass mark 60%)
+- **routes/gate.py** (`gate`)
+  - **GET/POST /gate**: Optional shared-password gate (active only when `SITE_PASSWORD` is set)
+- **routes/feedback.py** (`feedback`)
+  - **GET/POST /feedback**: Tester feedback submission + their own history (requires login)
+  - **GET /admin/feedback**: Admin inbox (read/unread toggle + delete)
+  - **POST /admin/feedback/<id>/toggle**, **POST /admin/feedback/<id>/delete**
 
 ### Error Handlers (app.py)
 - **403 / 404 / 500**: Styled error pages via `templates/error.html`
 
 ### Shared Helpers (utils.py)
 - `slugify()` — URL-safe slug generation
+- `display_title()` — brand-correct title casing (ServiceNow, UI, ACL, ChatGPT, …)
 - `load_course_structure()` — discovers modules/lessons from `content/` filesystem
 - `course_progress()` — computes a user's completed set + completion percentage
+- `load_module_quiz()` / `grade_quiz()` — parse and grade a module's `quiz.md`
+- `quiz_summary()` / `module_quiz_summaries()` — best-score summaries for quizzes
 
 ### Route Logic Details
 - Course browsing loads courses from database + filesystem
@@ -194,8 +229,13 @@ All courses follow one fictional logistics company. You join GlidePort's IT team
 - **my_courses.html**: Enrolled courses dashboard — cards with enrolled date, progress bar, "Continue Learning", unenroll
 - **profile.html**: User dashboard — stats, overall progress, per-course progress
 - **error.html**: Styled 403/404/500 page
-- **admin/courses.html**: Course management table
+- **admin/courses.html**: Course management table (+ "Feedback Inbox" button)
 - **admin/course_form.html**: Create/edit course form
+- **admin/feedback.html**: Admin feedback inbox (status, type, message, source page, read/unread + delete)
+- **quiz.html**: Module quiz form
+- **quiz_result.html**: Graded score + revealed answers/reasoning
+- **gate.html**: Standalone shared-password unlock screen (private preview)
+- **feedback.html**: Tester feedback form + their recent submissions
 
 ## Styling (static/css/main.css)
 - **Design tokens**: CSS variables for palette, typography, spacing (8px grid), radii, shadows
@@ -210,6 +250,8 @@ All courses follow one fictional logistics company. You join GlidePort's IT team
 - Flask-SQLAlchemy
 - werkzeug (password hashing)
 - waitress (production server)
+- python-dotenv (environment config)
+- Markdown (lesson content rendering)
 
 ---
 
@@ -218,6 +260,8 @@ All courses follow one fictional logistics company. You join GlidePort's IT team
   - Generate a strong key: `python -c "import secrets; print(secrets.token_hex(32))"`
 - **DATABASE**: SQLite at `learning_portal.db` by default; override with `DATABASE_URL` (supports Postgres etc.)
 - **HOST / PORT**: Read from env, used by `run.py` (dev) and `serve.py` (Waitress)
+- **SITE_PASSWORD**: Optional shared-password gate for private previews. When set, every page except `/gate` and `/static/` requires it once per session; empty/unset disables the gate.
+- **ADMIN_USERNAMES**: Comma-separated usernames auto-promoted to admin at boot (else the first user becomes admin).
 - **SQLALCHEMY_TRACK_MODIFICATIONS**: False (performance optimization)
 - **Login View**: Redirects unauthenticated users to `/login`
 - **.env.example**: Documented template; real `.env` is git-ignored
@@ -237,7 +281,13 @@ python run.py
 
 # Or use production server (Waitress)
 python serve.py
+
+# Share a temporary public link (Waitress + Cloudflare quick tunnel; prints the URL)
+./start-local.sh
+./stop-local.sh
 ```
+
+> The real interpreter here is `/opt/anaconda3/bin/python3.12` (the default `python3` lacks the deps). Locally, `run.py` uses the dev server (debug); for anything public, use `serve.py`/`wsgi.py` (Waitress), never `run.py`.
 
 ---
 
@@ -267,6 +317,8 @@ python serve.py
 - [x] Course search/filtering: home search by title/description + sort + empty state (roadmap #9)
 
 ### Next Phase — Content Preparation
+- [x] **Private-preview infrastructure** (12 Oct 2026): shared-password gate + in-app feedback + `wsgi.py` / `DEPLOY.md` production setup; commit `0fe730f` pushed
+- [ ] **Stable public URL**: deploy to a free host (**PythonAnywhere** — see `DEPLOY.md`) so the link stops changing
 - [x] Rebuilt the ServiceNow course as a 10-module / 18-lesson curriculum from the `Admin & Dev Aug-Sep/` training materials
 - [x] Added **quizzes** — one per module, graded with reveal-answer + reasoning (QuizAttempt model + `/course/<slug>/<module>/quiz`)
 - [x] Added **Make the Platform Think** (`make-the-platform-think`, formerly `servicenow-scripting`) as the second GlidePort course
@@ -289,6 +341,28 @@ python serve.py
 - **Production WSGI entry** (`wsgi.py`): exposes `application` for gunicorn / PythonAnywhere; runs `create_app()` + `create_database()`.
 - **Local share scripts**: `start-local.sh` (Waitress + Cloudflare quick tunnel, prints the public URL) and `stop-local.sh`. Logs go to `logs/` (git-ignored).
 - **Deploy guide** (`DEPLOY.md`): quick tunnel vs. PythonAnywhere (free, persistent, recommended) vs. Render (free but ephemeral disk), plus the security checklist.
+
+---
+
+## Recent Work — 12 Oct 2026
+
+**Goal:** let testers in different locations use the portal and send feedback while development continues.
+
+**Public preview**
+- Installed **cloudflared** (Homebrew) and exposed the local app through a **Cloudflare quick tunnel** → `https://skirt-glucose-weather-actively.trycloudflare.com` (temporary; the URL changes on every restart).
+- Served the public face with **Waitress** (`serve.py`) instead of the Flask dev server, so the interactive debugger is never exposed.
+- Confirmed `SECRET_KEY` is strong (65 chars, in `.env`); **rotated the `admin` password** to a strong random value (kept out of the repo).
+- Verified the whole flow through the public URL: home → 302 to gate → unlock → login → browse → feedback submit → admin inbox.
+
+**Private-preview features (built today)**
+- Optional **shared-password gate** (`SITE_PASSWORD`).
+- **Feedback**: testers submit; admins read at `/admin/feedback`.
+- Production entry (`wsgi.py`) + local share scripts (`start-local.sh`, `stop-local.sh`) + `DEPLOY.md`.
+
+**Version control**
+- First large sync in a while: untracked generated files (`.DS_Store`, `__pycache__`, `instance/*.db`), git-ignored the source training docs (`Admin & Dev Aug-Sep/`), committed **`0fe730f`** (143 files) and pushed to **`origin/Initial-Dev`**.
+
+**Still open:** a *stable* public URL (deploy to PythonAnywhere per `DEPLOY.md`); the account setup is the user's step.
 
 ---
 

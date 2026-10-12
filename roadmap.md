@@ -13,17 +13,36 @@
 **All 9 roadmap items are complete — the platform is feature-complete.**
 
 ## 📍 Session Memory — resume here
-- **Courses live today (all seeded, all verified):**
+
+### 🗓️ 12 Oct 2026 — Public preview, gate, feedback, deploy prep, first big commit
+- **Made the portal shareable for tester feedback.**
+  - Installed **cloudflared** (Homebrew) and ran a **Cloudflare quick tunnel** to the local app → public URL `https://skirt-glucose-weather-actively.trycloudflare.com`.
+    ⚠️ Temporary: the URL **changes on every restart** and only works while this Mac is awake — re-share the new URL each session.
+  - Switched the public face from the **Flask dev server (debug ON)** to **Waitress** (`serve.py`) — debug mode must never be exposed.
+  - Confirmed `SECRET_KEY` is strong (65 chars, lives in `.env`, git-ignored).
+  - **Rotated the `admin` password** to a strong random value (shared with the user in chat — **not** stored in the repo).
+- **Built private-preview infrastructure (all verified live):**
+  - Optional **shared-password gate** — `routes/gate.py` + an `app.py` `before_request`, toggled by the `SITE_PASSWORD` env var; locks the whole site (except `/gate` + static) until unlocked. The gate password lives in `.env` — **never commit it**.
+  - **In-app feedback** — `Feedback` model + `routes/feedback.py`: testers submit at `/feedback`; admin reads at **Admin → Feedback Inbox** (`/admin/feedback`, read/unread toggle + delete).
+  - **Production entry** `wsgi.py`; **`start-local.sh`** (starts Waitress + tunnel and prints the public URL) / **`stop-local.sh`**; **`DEPLOY.md`** (quick tunnel vs **PythonAnywhere** — free + persistent + recommended — vs Render — free but ephemeral disk) plus a security checklist.
+- **Committed & pushed** `0fe730f` (143 files) to `origin/Initial-Dev`, after untracking generated files (`.DS_Store`, `__pycache__`, `instance/*.db`) and git-ignoring `Admin & Dev Aug-Sep/`.
+- **Remaining for sharing:** a **stable** public URL requires the PythonAnywhere deploy (the account is the user's to create). Code + `DEPLOY.md` are ready; the local quick-tunnel is the stopgap.
+
+### Standing notes
+- **Courses live (all seeded, all verified):**
   - `servicenow-basics` — **Introduction to ServiceNow** (10 modules / 18 lessons + 10 quizzes)
   - `make-the-platform-think` — **Make the Platform Think** (5 modules / 15 lessons + 5 quizzes) — was `servicenow-scripting`, renamed to a catchy trademark-safe name
   - `build-your-own-api` — **Build Your Own API** (2 modules / 6 lessons + 2 quizzes)
   - `automate-the-delivery-line` — **Automate the Delivery Line** (4 modules / 12 lessons + 4 quizzes)
-  - `open-the-loading-dock` — **Open the Loading Dock** (4 modules / 12 lessons + 4 quizzes) — built & verified this session
+  - `open-the-loading-dock` — **Open the Loading Dock** (4 modules / 12 lessons + 4 quizzes)
   - `dive-deep-into-itom`, `what-is-service-mapping` — pre-seeded DB rows, **no content yet**
 - **Naming rule (established):** never reuse ServiceNow-owned or market-standard course/module/lesson names in a course title — every title is a catchy phrase told through the GlidePort story. `app.py` `KNOWN_COURSES` holds the story titles/descriptions.
 - **NEXT:** build **Service Portal & UX** (GlidePort arc step 3) — story hook: the customer-facing delivery tracking portal (place an order, track it live, manage notifications).
-- **Open items:** ITOM + Service Mapping content; per-course thumbnails; commit/sync the large uncommitted working tree.
+- **Open items:** ITOM + Service Mapping content; per-course thumbnails; stable deploy (PythonAnywhere).
 - **Dev loop:** content is auto-seeded by `create_database(app)` (the dev server re-seeds on reload); verify new courses appear via home page; quiz format + parser live in `utils.py`.
+  - **Start sharing after a reboot:** `cd /Users/aswinipula/ATOM && ./start-local.sh` (prints the public URL); `./stop-local.sh` to stop.
+  - **Run locally (dev):** `/opt/anaconda3/bin/python3.12 run.py` (debug). **Run for sharing:** `/opt/anaconda3/bin/python3.12 serve.py` (Waitress).
+  - **Keep DB Browser for SQLite closed** while the app runs, or writes fail with "database is locked".
 
 ## Next Phase: Content Preparation
 The application shell is done. The main leverage now is real learning content.
@@ -108,6 +127,8 @@ Each new course keeps the story hook and ships one quiz per module (pass 60%, re
   - Optional shared-password **gate** (`routes/gate.py` + `app.py` `before_request`) controlled by the `SITE_PASSWORD` env var — locks the whole site (except `/gate` and static) behind one password for private previews; disabled when unset.
   - **In-app feedback**: `Feedback` model + `routes/feedback.py` (`/feedback` for testers, `/admin/feedback` inbox with read/unread toggle + delete) + nav link and admin-inbox button.
   - `wsgi.py` production entry point; `start-local.sh` / `stop-local.sh` (Waitress + Cloudflare quick tunnel); `DEPLOY.md` guide (quick tunnel / PythonAnywhere / Render) + security checklist.
+  - **Public preview (12 Oct 2026):** installed **cloudflared** (Homebrew); served the app publicly via **Waitress** (debug off) behind a **Cloudflare quick tunnel** (`https://skirt-glucose-weather-actively.trycloudflare.com`, ephemeral URL); **rotated the `admin` password**; confirmed `SECRET_KEY` strength; verified gate + feedback end-to-end through the public URL.
+  - **Repo hygiene + first big sync (12 Oct 2026):** untracked generated files (`.DS_Store`, `__pycache__`, `instance/*.db`) and git-ignored `Admin & Dev Aug-Sep/`; committed `0fe730f` (143 files) and pushed to `origin/Initial-Dev`.
 
 ---
 
