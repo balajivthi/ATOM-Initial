@@ -22,8 +22,8 @@ Basic auth over HTTPS is fine; over plain HTTP it's a password in clear text —
 
 ```js
 var request = new sn_ws.RESTMessageV2('GlidePort Shipping', 'getStatus');
-request.setBasicAuth('glideport_api', 'S3cr3t!');   // ← WORKS, but don't do this
-request.setRequestHeader('X-Api-Key', 'abc123');     // ← also works, also don't
+request.setBasicAuth('glideport', 'S3cr3t');          // ← WORKS, but don't do this
+request.setRequestHeader('X-Api-Key', 'abc123');      // ← also works, also don't
 ```
 
 Both *work*. Both are **wrong** in real code, because:
@@ -71,13 +71,15 @@ That's the whole argument in one example.
 
 ## Lab: Move the Secret Out of the Script
 
-1. Create a Credential named `GlidePort Shipping – API` with a dummy username/password.
-2. On your `GlidePort Shipping` REST Message, open the HTTP Method's **Authentication** tab and select that credential.
-3. Delete any `setBasicAuth(...)` line from your Script Include.
-4. Call it again and confirm it still authenticates (use a sandbox that echoes your auth, or just confirm no error).
-5. Change the credential's password and confirm the caller uses the new value with **zero code changes**.
+The auth sandbox (`https://httpbin.org`) checks credentials *for real*, so you can watch it flip between allowed and denied.
 
-**Check your work:** no secret appears in any script; the credential record is the single source of truth.
+1. Create a **Credential** named `GlidePort Sandbox – Basic` of type *Basic Auth Credentials*, with username `glideport` and password `S3cr3t`.
+2. Create a REST Message with base `https://httpbin.org` and an HTTP Method `GET https://httpbin.org/basic-auth/glideport/S3cr3t`. Select the credential on the method's **Authentication** tab.
+3. Call it and confirm a **`200`**. Remove the credential and call again — confirm a **`401`**.
+4. Prove the header really leaves the building: call `GET https://httpbin.org/headers` with the credential and inspect the `Authorization` header in the echoed response.
+5. Change the credential's password to a *wrong* value and call again — the sandbox answers `401`, with **zero code changes**.
+
+**Check your work:** no secret appears in any script; the credential record is the single source of truth, and the sandbox flips between `200` and `401` purely based on that record.
 
 ## Key Takeaways
 

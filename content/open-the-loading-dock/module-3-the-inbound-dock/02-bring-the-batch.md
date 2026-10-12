@@ -102,7 +102,16 @@ For events, prefer the inbound endpoint from the previous lesson.
 
 ## Lab: Reconcile the Daily Manifest
 
-1. Create a CSV with 5 rows (`tracking,status,expected,agent`) including **one tracking number that already exists** in your orders.
+1. Create a CSV named `manifest.csv` with 5 rows, including **one tracking id that already exists** in your orders (so you can prove coalesce *updates* instead of duplicating):
+
+   ```csv
+   tracking,status,expected,agent
+   1,out_for_delivery,2026-10-13,Emily Johnson
+   2,delivered,2026-10-12,Michael Smith
+   3,in_transit,2026-10-14,Sophia Brown
+   4,out_for_delivery,2026-10-13,James Wilson
+   5,pending,2026-10-15,Emma Davis
+   ```
 2. Build the Data Source, Import Set table, and Transform Map with **coalesce on `tracking`**.
 3. Load and transform. Confirm: existing orders are **updated**, new ones are **created**, none duplicated.
 4. Add a deliberately malformed row and confirm it lands in staging with an **error**, without corrupting target records.

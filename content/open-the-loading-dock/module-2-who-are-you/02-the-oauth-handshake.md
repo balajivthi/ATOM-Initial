@@ -27,14 +27,16 @@ A token is **temporary**, **scoped**, and **revocable**. That's why nearly every
 For **server-to-server** calls — no human clicking "Allow" — the **client credentials** grant is the fit. GlidePort swaps its client id/secret for a token:
 
 ```
-POST https://auth.shipping.example/oauth/token
+POST https://demo.duendesoftware.com/connect/token
 Content-Type: application/x-www-form-urlencoded
 
 grant_type=client_credentials
-&client_id=glideport-client
-&client_secret=••••••
-&scope=shipping.read shipping.write
+&client_id=m2m
+&client_secret=secret
+&scope=api
 ```
+
+> *These are the public **demo** credentials for the practice OAuth server (see [Lab Setup](/lab-setup)). A real partner issues you your own client id/secret and domain scopes such as `shipping.read`.*
 
 The server replies:
 
@@ -50,7 +52,7 @@ The server replies:
 Then every API call carries the token:
 
 ```
-GET https://api.shipping.example/v1/track/GP123
+GET https://demo.duendesoftware.com/api/test
 Authorization: Bearer eyJhbGciOi...
 ```
 
@@ -95,13 +97,22 @@ var response = request.execute();
 
 ## Lab: Walk the Handshake
 
-1. Register a dummy **third-party OAuth provider** in Application Registry using `client_credentials`.
-2. Point it at a test OAuth server (or a sandbox partner). Enter a client id/secret.
-3. Click **Get OAuth Token** and confirm you receive an access token.
-4. Configure your `GlidePort Shipping → getStatus` method to use this provider.
-5. Call it and confirm the request goes out with a `Bearer` token (check the Outbound HTTP log).
+The demo IdentityServer at `demo.duendesoftware.com` issues **real** tokens using public, non-secret demo credentials — so you can complete the whole handshake and watch it succeed.
 
-**Check your work:** the token is obtained and cached by the platform, and the API call authenticates without any secret appearing in your script.
+1. **All → System OAuth → Application Registry → New → Connect to a third party OAuth Provider**.
+2. Enter:
+   - **Token URL:** `https://demo.duendesoftware.com/connect/token`
+   - **Grant type:** `Client Credentials`
+   - **Client ID:** `m2m`
+   - **Client Secret:** `secret`
+   - **Scope:** `api`
+3. **Save**, then click **Get OAuth Token** — confirm you receive an access token.
+4. Add a REST Message method `GET https://demo.duendesoftware.com/api/test` that uses this provider for authentication.
+5. Call it and confirm a **`200`**. Call the same URL with no token and confirm a **`401`** — then check the Outbound HTTP log to see your `Authorization: Bearer …` header.
+
+> You can rehearse the whole exchange from a terminal first with the `curl` commands on the **[Lab Setup](/lab-setup)** page.
+
+**Check your work:** the token is obtained and cached by the platform, the protected resource returns `200`, and no secret appears in your script.
 
 ## Key Takeaways
 

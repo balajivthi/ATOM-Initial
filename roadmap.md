@@ -14,6 +14,20 @@
 
 ## 📍 Session Memory — resume here
 
+### 🗓️ 12 Oct 2026 — Made every lab actually runnable (real public sandboxes)
+- **Problem found in the review:** *Open the Loading Dock* pointed every hands-on call at fictional hosts (`api.shipping.example`, `auth.shipping.example`), so **no lab could actually run**; the ChatGPT lesson required a **paid** OpenAI key. The other four courses are PDI-only and were already runnable.
+- **Fix — free, no-install sandboxes (each verified live before adopting):**
+  - **Van partner sandbox** `https://dummyjson.com` — `/carts/{id}` (manifest), `POST /carts/add` (201 + booking id), `/users`.
+  - **Request & auth sandbox** `https://httpbin.org` — `/basic-auth/...` (401→200), `/bearer`, `/headers`, `/status/{code}`.
+  - **OAuth server** `https://demo.duendesoftware.com` — real `client_credentials` (client `m2m` / secret `secret` / scope `api`) → protected `GET /api/test` (401 without token, 200 with).
+  - **Live feed** `https://api.open-meteo.com` — genuinely changing data.
+  - Fallbacks noted in the guide: `httpbingo.org` (httpbin mirror), `jsonplaceholder.typicode.com` (simpler CRUD).
+- **New shared page:** `content/_lab-setup.md` → route `GET /lab-setup` (`templates/lab_setup.html`), linked from the **top nav** (“Lab Setup”) and an **info banner on every course page**. Holds PDI signup + all sandbox endpoints with copy-paste `curl` checks + “how to send an inbound test call” (test client **or** a second PDI — the two-instance trick).
+- **Rewrote the labs** in Open the Loading Dock (M1L2/L3, M2L1/L2/L3, M3L1/L2/L3, M4L1/L2/L3) to run against the sandboxes, with concrete **expected results** (status codes, fields). Story kept (GlidePort + van partner); the sandbox is framed as the partner's stand-in — “only the URL and credentials change for a real partner.”
+- **ChatGPT lesson** (`servicenow-basics` M10L2): added a **no-key mock path** (point at `https://httpbin.org/post`, read `body.json.prompt`) + free-tier note (Groq/OpenRouter) + why a local Ollama can’t work from a cloud PDI.
+- **Housekeeping:** fixed the one fictional URL in *Automate* (M4L1 illustration); confirmed quizzes carry no fake endpoints.
+- **Parked item (next priority):** connect the PythonAnywhere deploy to git for a `push → pull → Reload` flow (the server was uploaded via zip, so it has no `.git` yet).
+
 ### 🗓️ 12 Oct 2026 — Public preview, gate, feedback, deploy prep, first big commit
 - **Made the portal shareable for tester feedback.**
   - Installed **cloudflared** (Homebrew) and ran a **Cloudflare quick tunnel** to the local app → public URL `https://skirt-glucose-weather-actively.trycloudflare.com`.
@@ -29,6 +43,7 @@
 - **Remaining for sharing:** a **stable** public URL requires the PythonAnywhere deploy (the account is the user's to create). Code + `DEPLOY.md` are ready; the local quick-tunnel is the stopgap.
 
 ### Standing notes
+- **Authoring playbook (for every future course):** see **`project-overview.md` → Content & Lab Authoring Playbook** — story-first, trademark-safe names, one quiz per module, and the hard rule that **every lab runs for real**: a free PDI for platform work, the verified public sandbox set (`dummyjson` / `httpbin` / Duende OAuth / Open-Meteo) for integrations, and **never** a fictional URL (fallback = two PDIs). New sandboxes go in `content/_lab-setup.md` only.
 - **Courses live (all seeded, all verified):**
   - `servicenow-basics` — **Introduction to ServiceNow** (10 modules / 18 lessons + 10 quizzes)
   - `make-the-platform-think` — **Make the Platform Think** (5 modules / 15 lessons + 5 quizzes) — was `servicenow-scripting`, renamed to a catchy trademark-safe name
@@ -60,7 +75,7 @@ The application shell is done. The main leverage now is real learning content.
 - [x] Expanded **Make the Platform Think** to **5 modules / 15 lessons / 5 quizzes** — added *Scripts in the Browser* (Client Scripts 101, first Client Script lab, patterns) and *Self-Service Catalog* (build a catalog item, catalog client scripts, catalog client script lab).
 - [x] **Build Your Own API** (`build-your-own-api`) — the advanced scripting course: **2 modules / 6 lessons + 2 quizzes** covering Script Includes & the AJAX pattern (client-callable Script Includes / GlideAjax) and Scripted REST endpoints (write, secure, test). Built and verified.
 - [x] **Automate the Delivery Line** (`automate-the-delivery-line`) — the Flow Designer & Automation course: **4 modules / 12 lessons + 4 quizzes** (The Assembly Line · Where Automations Begin · Branching and Data · Run It for Real) covering triggers, conditions/run modes, flow logic, data pills & variables, error handling, subflows/custom actions, tool selection, and monitoring. Built and verified.
-- [x] **Open the Loading Dock** (`open-the-loading-dock`) — the REST APIs & Integrations course: **4 modules / 12 lessons + 4 quizzes** (The Outbound Desk · Who Are You? · The Inbound Dock · Wiring It Up) covering outbound REST (RESTMessageV2), credentials & OAuth & aliases, inbound events/webhooks (auth, idempotency), Import Sets & Data Streams, IntegrationHub spokes vs REST steps, and integration observability. Built and verified.
+- [x] **Open the Loading Dock** (`open-the-loading-dock`) — the REST APIs & Integrations course: **4 modules / 12 lessons + 4 quizzes** (The Outbound Desk · Who Are You? · The Inbound Dock · Wiring It Up) covering outbound REST (RESTMessageV2), credentials & OAuth & aliases, inbound events/webhooks (auth, idempotency), Import Sets & Data Streams, IntegrationHub spokes vs REST steps, and integration observability. **Every lab now runs against live, free public sandboxes** (DummyJSON / httpbin / Duende demo OAuth / Open-Meteo) — see the shared **`/lab-setup`** page. Built and verified.
 - [ ] Add content for pre-seeded course topics (ITOM, Service Mapping) so they aren't empty.
 - [ ] Course thumbnails: current cards use gradient placeholders; replace with per-course `static/images/<slug>.jpg` (needs small template change if desired).
 

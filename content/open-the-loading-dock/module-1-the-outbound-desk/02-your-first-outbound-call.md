@@ -16,12 +16,12 @@ We'll learn the declarative record first — it's the one you'll reuse — then 
 
 1. **All → System Web Services → Outbound → REST Message → New**.
 2. **Name:** `GlidePort Shipping`
-3. **Endpoint:** `https://api.shipping.example/v1`
+3. **Endpoint:** `https://dummyjson.com`  *(the partner sandbox — see [Lab Setup](/lab-setup))*
 4. Save, then add an **HTTP Method**:
    - **Name:** `getStatus`
    - **HTTP method:** `GET`
-   - **Endpoint:** `https://api.shipping.example/v1/track/${tracking}`
-5. Add a **Variable** `tracking` (so the caller supplies the tracking number).
+   - **Endpoint:** `https://dummyjson.com/carts/${tracking}`
+5. Add a **Variable** `tracking` (so the caller supplies the shipment id).
 6. Set the **Authentication** (next module — leave it as *No authentication* for now).
 
 You now have a named, reusable integration point. Anyone can call `GlidePort Shipping → getStatus` without knowing the URL.
@@ -59,14 +59,13 @@ When the URL is dynamic or you need a POST with a JSON body, skip the record:
 
 ```js
 var request = new sn_ws.RESTMessageV2();
-request.setEndpoint('https://api.shipping.example/v1/bookings');
+request.setEndpoint('https://dummyjson.com/carts/add');
 request.setHttpMethod('post');
 request.setRequestHeader('Accept', 'application/json');
 request.setRequestHeader('Content-Type', 'application/json');
 request.setRequestBody(JSON.stringify({
-    order: orderNumber,
-    address: address,
-    requested_date: requestedDate
+    userId: 1,
+    products: [ { id: 1, quantity: 2 } ]   // the parcels to load on this van
 }));
 
 var response = request.execute();
@@ -89,10 +88,12 @@ var response = request.execute();
 
 ## Lab: Ask the Partner
 
-1. Create the `GlidePort Shipping → getStatus` REST Message as above (point it at a sandbox or a request-inspection service like `https://httpbin.org/get?tracking=${tracking}` if you have no partner).
+1. Create the `GlidePort Shipping → getStatus` REST Message as above, pointed at the sandbox: base `https://dummyjson.com`, method `GET https://dummyjson.com/carts/${tracking}`, with a variable `tracking`.
 2. Add a Script Include method `getTrackingStatus(trackingNumber)` using `RESTMessageV2`.
-3. Run it from **Scripts Background** with a sample tracking number.
-4. Print the status code and body. Confirm you get a `200` and a JSON body.
+3. Run it from **Scripts Background** with the shipment id `1`.
+4. Print the status code and body. Confirm you get a `200` and JSON containing `totalQuantity` (the parcels on that van's manifest).
+
+> **Can't reach it from the instance?** First prove the sandbox works from your own machine with `curl https://dummyjson.com/carts/1` (see [Lab Setup](/lab-setup)). If that works but ServiceNow can't call it, the problem is on the ServiceNow side (endpoint, auth, or MID server) — not the sandbox.
 
 **Check your work:** a reusable named integration point exists, and server-side code can call it and read the response.
 

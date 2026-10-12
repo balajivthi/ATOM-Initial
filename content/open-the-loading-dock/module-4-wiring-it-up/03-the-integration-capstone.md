@@ -12,12 +12,12 @@ CUSTOMER PLACES ORDER
         ▼
 [ Flow: Automate the Delivery Line ]  (inbound trigger)
         │
-        ├─ Outbound: POST /v1/bookings to the van partner
+        ├─ Outbound: POST https://dummyjson.com/carts/add   (book a van)
         │        auth: OAuth via alias "shipping-api"
-        │        body: order, address, requested_date
+        │        body: { userId, products: [ … ] }
         │        Try/Catch → on failure: task + alert
         │
-        ├─ Store the partner's booking_id on the order
+        ├─ Store the partner's booking id on the order
         │
         └─ Spoke/REST step: post "new booking" to the dispatch channel
 
@@ -73,11 +73,11 @@ Before you call an integration done:
 
 Build the end-to-end integration in stages, testing each:
 
-1. **Outbound booking.** Extend your delivery flow to call `POST /v1/bookings` on the partner, authenticated via the `shipping-api` alias (use a sandbox if you have no real partner). Wrap it in Try/Catch.
-2. **Store the result.** Save the returned `booking_id` on the order; post a message to dispatch (spoke or REST step).
+1. **Outbound booking.** Extend your delivery flow to call `POST https://dummyjson.com/carts/add` (the sandbox's "book a van"), authenticated via the `shipping-api` alias. Wrap it in Try/Catch.
+2. **Store the result.** Save the returned cart `id` (your booking id) on the order; post a message to dispatch (spoke or REST step — `https://httpbin.org/post` works if you have no spoke).
 3. **Inbound events.** Stand up `POST /van/events` (authenticate → validate → de-dupe → `202`), and a flow that updates the order and closes it on `delivered`.
 4. **Batch reconcile.** Build the CSV → import set → transform with coalesce; schedule Load + Transform at 06:00; flag orders missing from the manifest.
-5. **Observe.** Break the partner URL on purpose; confirm the failure is logged *and* a task is created. Add a success counter and a heartbeat.
+5. **Observe.** Break the partner URL on purpose (e.g. point it at `https://httpbin.org/status/500`); confirm the failure is logged *and* a task is created. Add a success counter and a heartbeat.
 
 **Verify end-to-end:**
 - Create an order → booking call goes out → `booking_id` stored (check the outbound HTTP log).

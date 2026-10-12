@@ -63,7 +63,7 @@ GlidePort's **"Get van ETA"** custom action wraps the partner API:
 ```
 Action: Get Van ETA
   Input:  van_number (string)
-  Step:   REST → GET https://vans.glideport.example/eta/{van_number}
+  Step:   REST → GET https://dummyjson.com/carts/{van_number}
   Output: eta (string)
 ```
 

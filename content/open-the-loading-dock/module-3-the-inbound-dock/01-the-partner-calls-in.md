@@ -21,7 +21,7 @@ POST https://<instance>.service-now.com/api/now/van/events
 Content-Type: application/json
 X-Api-Key: •••••
 
-{ "event": "delivered", "tracking": "GP123", "at": "2026-10-12T14:02:00Z" }
+{ "event": "delivered", "event_id": "evt-001", "tracking": "1", "at": "2026-10-12T14:02:00Z" }
 ```
 
 On GlidePort's side, something must **receive** that call and do something useful. Your options:
@@ -132,7 +132,16 @@ Return `400` for bad payloads so the partner's logs show it and they can fix the
 2. Require an `X-Api-Key` header; reject others with `401`.
 3. Validate that `tracking` and `event` are present, else `400`.
 4. De-dupe by `event_id`; store the raw payload in a staging table; return `202`.
-5. From a test client (Postman/`curl`), send the same event twice and confirm exactly one row is stored the first time and a "duplicate" is acknowledged the second.
+5. Now **be the partner**. From a terminal, [Hoppscotch](https://hoppscotch.io), or a **second PDI**, send the event *twice*:
+
+   ```bash
+   curl -i -X POST "https://YOUR-INSTANCE.service-now.com/api/now/van/events" \
+     -H "Content-Type: application/json" \
+     -H "X-Api-Key: <the-key-you-configured>" \
+     -d '{"event":"delivered","event_id":"evt-001","tracking":"1","at":"2026-10-12T14:02:00Z"}'
+   ```
+
+   Confirm exactly one row is stored the first time, and a "duplicate" is acknowledged the second. (See **[Lab Setup](/lab-setup)** → Part 3 for the two ways to send an inbound test call.)
 
 **Check your work:** unauthenticated → `401`; malformed → `400`; valid → `202` and one stored event; repeat → acknowledged, not duplicated.
 

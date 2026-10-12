@@ -73,7 +73,7 @@ Proactive beats reactive:
 
 ## Lab: Find a Broken Wire
 
-1. Make a deliberate outbound failure (point the shipping call at a bad URL).
+1. Make a deliberate outbound failure: repoint the shipping call at `https://httpbin.org/status/500` (a transient server error) — or `https://httpbin.org/status/404` for a permanent one.
 2. Run it via a flow or Scheduled Job.
 3. Open **Outbound HTTP Requests** and find the failed call; read the status/body.
 4. Add a **Try/Catch** to the flow: log at error level and **create a task**.

@@ -80,10 +80,10 @@ Everyone — developer or not — reads the flow and sees business steps, not HT
 
 ## Lab: Put a Spoke in the Loop
 
-1. In your delivery flow, add a notification step. If a spoke is available (Teams/Slack/email), use a **spoke action**; otherwise add a **REST step** or a **custom action**.
+1. In your delivery flow, add a notification step. Use a **spoke action** if one is available (Teams/Slack/email). If you have **no spoke**, add a **REST step** that posts to the request sandbox — `POST https://httpbin.org/post` with a JSON body like `{ "order": "…", "agent": "…" }` — which echoes exactly what you sent (see [Lab Setup](/lab-setup)).
 2. Provide its inputs with **data pills** (order number, agent).
 3. Attach an **alias** for authentication.
-4. Test the flow; confirm the message/step fires in the execution log.
+4. Test the flow; confirm the step fires with a **`200`** in the execution log — and, for httpbin, that the echoed body contains your order number.
 5. Write one sentence: why did you choose a spoke, REST step, or custom action here?
 
 **Check your work:** the flow posts to the team (or calls the API) with no secret in the flow and no hand-written auth.

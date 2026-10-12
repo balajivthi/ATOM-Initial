@@ -75,13 +75,14 @@ Update the watermark **only after** a clean transform. If a run fails, the next 
 
 ## Lab: Stream the Van Locations
 
-1. Take the REST-based Data Source pattern and point it at a JSON endpoint returning `{ "since": ..., "vans": [ … ] }`.
-2. Map `vans[]` to a staging table, then transform with **coalesce on `van_id`** into an `u_van_location` table.
-3. Add a **watermark**: pass the previous run's timestamp into the request; update it only after a successful transform.
-4. Schedule it to run every 15 minutes; confirm each run only touches changed vans.
-5. Decide whether this should really be a **Data Stream** instead, and write one sentence explaining your choice.
+1. Build a **REST-based Data Source** pointed at the partner sandbox's agent list: `https://dummyjson.com/users?limit=5` (a JSON feed shaped like `{ "users": [ … ], "total": 100 }`).
+2. Map `users[]` to a staging table, then transform with **coalesce on `id`** into a `u_van_location` table (treat each agent as a van/driver).
+3. Run the load + transform **twice**. Confirm the second run does **not** duplicate rows — coalesce upserts.
+4. Design the **watermark**: the sandbox returns the full list, so coalesce keeps re-runs safe. A *real* partner feed would accept `?since=<last_run>`; write down where you'd store that watermark and confirm it should be updated **only after** a clean transform.
+5. For a genuinely **live** feed, add a second Data Source at `https://api.open-meteo.com/v1/forecast?latitude=51.51&longitude=-0.13&current=temperature_2m,wind_speed_10m` ("van telemetry") and note that `current.time` changes on every run.
+6. Decide whether this should really be a **Data Stream** instead, and write one sentence explaining your choice.
 
-**Check your work:** repeated runs don't duplicate vans (coalesce), and each run requests only data since the last successful sync.
+**Check your work:** repeated runs don't duplicate agents (coalesce), and you can explain when you'd choose streaming over a scheduled pull.
 
 ## Key Takeaways
 

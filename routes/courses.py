@@ -27,6 +27,18 @@ def home():
     courses = course_query.all()
     return render_template('home.html', courses=courses, query=query, sort=sort)
 
+@courses_bp.route('/lab-setup')
+def lab_setup():
+    """Shared, login-free reference page: PDI signup + the public sandbox
+    endpoints every integration lab runs against."""
+    path = os.path.join(current_app.root_path, 'content', '_lab-setup.md')
+    if not os.path.isfile(path):
+        return "Lab setup guide not found!", 404
+    with open(path, 'r', encoding='utf-8') as f:
+        content = markdown_converter.convert(f.read())
+    return render_template('lab_setup.html', content=content, title='Lab Setup')
+
+
 @courses_bp.route('/course/<course_slug>')
 @login_required
 def course_detail(course_slug):

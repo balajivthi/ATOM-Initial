@@ -2,6 +2,8 @@
 
 **Story so far:** GlidePort's Delivery App is smart (scripting) and self-driving (automation) — but it lives on an island. The van partner, the payments gateway, the address-validation service, and the customer's own systems all live *outside*. Orders still arrive by email, tracking numbers get copy-pasted, and the daily delivery plan is rebuilt by hand. Integration is how GlidePort stops being an island.
 
+> **Practice Ground.** Every hands-on call in this course talks to something **real** — a free, public **partner sandbox** — so no lab ever asks you to imagine an answer. The endpoints, the one-time setup, and copy-paste `curl` checks live on the **[Lab Setup](/lab-setup)** page. Skim it once now; you'll return to it when a lab says *"call the partner"*.
+
 ## The Island Problem
 
 Today, GlidePort is the only system that knows the whole story. Everyone else knows a fragment:
@@ -37,7 +39,7 @@ Most real GlidePort flows use **both**: we call out to book a van (outbound), an
 ```
                  ┌─────────────────────┐
                  │   Van partner API   │◀── outbound: book a pickup
-                 │ (shipping.example)  │──▶ inbound: delivered events
+                 │ (partner sandbox)   │──▶ inbound: delivered events
                  └─────────▲───────────┘
                            │
    ┌───────────────┐   ┌───┴────────────────┐   ┌──────────────────┐
@@ -57,7 +59,7 @@ Draw this map *before* you build anything — it's your checklist and your roadm
 
 | Term | Meaning |
 | --- | --- |
-| **Endpoint** | The URL you call (`https://api.shipping.example/v1/track`) |
+| **Endpoint** | The URL you call (`https://dummyjson.com/carts/1`) |
 | **Request / Response** | What you send, and what comes back |
 | **Payload** | The body of a request or response, usually **JSON** |
 | **Status code** | `200` OK, `201` created, `400` bad request, `401` unauthorized, `404` not found, `500` server error, `429` rate-limited |

@@ -30,7 +30,7 @@ start-local.sh      # Start app + Cloudflare quick tunnel, then print the public
 stop-local.sh       # Stop the app + tunnel
 DEPLOY.md           # Deployment guide (tunnel / PythonAnywhere / Render) + security checklist
 requirements.txt    # Python dependencies
-content/            # Markdown course content (organized by course/module/lesson)
+content/            # Markdown course content (course/module/lesson) + shared _lab-setup.md
 templates/          # HTML templates (Jinja2)
 static/             # CSS (main.css), JS, images
 ```
@@ -105,6 +105,7 @@ Routes are modularized into Flask blueprints under `routes/`:
   - **GET /logout**: Logout (requires login)
 - **routes/courses.py** (`courses`)
   - **GET /**: Home page - displays all courses, with search (`?q=`) by title/description and sorting (`?sort=title|newest`)
+  - **GET /lab-setup**: Shared, login-free reference page (renders `content/_lab-setup.md`) — PDI signup + the public sandbox endpoints every integration lab uses; linked from the top nav and a banner on every course page
   - **GET /course/<course_slug>**: Course detail page with modules & lessons, enroll/unenroll state, and per-user progress bar (requires login)
   - **GET /course/<course_slug>/<module_slug>/<lesson_slug>**: Individual lesson detail + content rendering + completion state (requires login)
 - **routes/enrollments.py** (`enrollments`)
@@ -211,6 +212,43 @@ All courses follow one fictional logistics company. You join GlidePort's IT team
 - `extensions.py` markdown converter now enables `tables` and `fenced_code` for rich lesson rendering; `Markdown` added to `requirements.txt`
 - `create_database` auto-seeds any `content/` folder as a course (story-aware titles/descriptions for known courses, generic otherwise)
 
+### Lab Runnability & the Practice Ground (12 Oct 2026)
+- **Every lab is runnable.** Platform courses need only a free **PDI** (`developer.servicenow.com`); the integration course needs a few **free public sandboxes**. No fictional endpoints remain.
+- Shared guide: **`content/_lab-setup.md`** → route `GET /lab-setup` (`templates/lab_setup.html`), linked from the **top nav** and a **banner on every course page**.
+- Sandboxes used by *Open the Loading Dock* (all verified live):
+  - **Van partner** — `https://dummyjson.com` (`/carts/{id}`, `POST /carts/add`, `/users`)
+  - **Request & auth** — `https://httpbin.org` (`/basic-auth/...`, `/bearer`, `/headers`, `/status/{code}`)
+  - **OAuth server** — `https://demo.duendesoftware.com` (real `client_credentials`: client `m2m` / secret `secret` / scope `api` → `GET /api/test`)
+  - **Live feed** — `https://api.open-meteo.com`
+  - Fallbacks: `httpbingo.org` (httpbin mirror), `jsonplaceholder.typicode.com`.
+- Inbound labs are simulated by the learner (a test client such as `curl`/Hoppscotch, **or** a second PDI).
+- The ChatGPT lesson (`servicenow-basics` M10L2) gained a **no-key mock path** (`https://httpbin.org/post`, read `body.json.prompt`) plus a free-tier note (Groq/OpenRouter).
+
+## Content & Lab Authoring Playbook (read this before building the next course)
+
+**Story first.** Every course continues the **GlidePort Logistics** arc and extends the Delivery App. Never reuse ServiceNow-owned or market-standard names — titles are catchy phrases. Register new course titles/descriptions in `app.py` `KNOWN_COURSES`.
+
+**Folder shape.** `content/<course-slug>/module-N-name/NN-lesson.md`, plus exactly one `quiz.md` per module. Discovery is automatic (`utils.load_course_structure`); `create_database(app)` auto-seeds any new content folder as a course. Lesson titles come from the filename (the loader strips the `NN-` prefix).
+
+**Lesson shape** (match the existing courses): `# Title` · a one-line **Story so far** · concept sections with tables/diagrams · a `## Lab: …` · `**Check your work:**` · `## Key Takeaways` · `## Best Practices`.
+
+**The hard rule — every lab must actually run.**
+- **Platform labs** (tables, forms, scripts, Business Rules, flows, Scripted REST, ACLs…) → run on a free **PDI**. That is the only prerequisite; point learners at **[`/lab-setup`]**.
+- **Integration labs** → use the verified **public sandbox set** and **never invent an endpoint**:
+  - `https://dummyjson.com` — data (`/carts/{id}`, `POST /carts/add`, `/users`)
+  - `https://httpbin.org` — auth / status / echo (`/basic-auth/...`, `/bearer`, `/headers`, `/status/{code}`)
+  - `https://demo.duendesoftware.com` — real OAuth `client_credentials` (client `m2m` / secret `secret` / scope `api`) → `GET /api/test`
+  - `https://api.open-meteo.com` — genuinely live, changing data
+- **Inbound** labs ("the partner calls you") → the learner *simulates* the partner with a test client (`curl`/Hoppscotch) **or a second PDI** (see `_lab-setup.md` Part 3).
+- **No free public API for a concept?** Fall back to **two PDIs calling each other** — never ship a fictional URL.
+- **Keep endpoints in one place:** add any new sandbox to `content/_lab-setup.md` and link labs to `/lab-setup`. Swapping a dead service is then a one-line change. Documented fallbacks: `httpbingo.org` (httpbin mirror), `jsonplaceholder.typicode.com` (simpler CRUD).
+
+**Before writing a lab, verify the endpoint.** `curl` it and confirm the exact status/shape you will promise (e.g. `POST https://dummyjson.com/carts/add` → **201** with a new `id`). Bake the real expected result into `**Check your work:**`.
+
+**Quizzes.** One `quiz.md` per module: `# Quiz: Title`, then `N. question`, `   A. …` options, `   CORRECT: B`, `   EXPLAIN: …` (parsed by `utils.py`). Pass mark **60%**. Keep answers consistent with whatever endpoint/field the lesson now uses.
+
+**After adding content:** it auto-seeds on the next app start (or use **Admin → Seed from Content**). Render-test new pages with Flask's test client (`app.test_client()`, disabling `SITE_PASSWORD`) before committing.
+
 ### Naming Conventions
 - **Courses**: kebab-case (e.g., `servicenow-basics`)
 - **Modules**: `module-N-description` format
@@ -236,6 +274,7 @@ All courses follow one fictional logistics company. You join GlidePort's IT team
 - **quiz_result.html**: Graded score + revealed answers/reasoning
 - **gate.html**: Standalone shared-password unlock screen (private preview)
 - **feedback.html**: Tester feedback form + their recent submissions
+- **lab_setup.html**: Renders the shared Lab Setup & Practice Ground guide (`content/_lab-setup.md`)
 
 ## Styling (static/css/main.css)
 - **Design tokens**: CSS variables for palette, typography, spacing (8px grid), radii, shadows
@@ -327,6 +366,7 @@ python serve.py
 - [x] Added **Build Your Own API** (`build-your-own-api`) — Script Includes & GlideAjax + Scripted REST endpoints (2 modules / 6 lessons + 2 quizzes)
 - [x] Added **Automate the Delivery Line** (`automate-the-delivery-line`) — the Flow Designer & Automation course: 4 modules / 12 lessons + 4 quizzes (triggers, conditions/run modes, flow logic, data, error handling, subflows/custom actions, tool selection, monitoring)
 - [x] Added **Open the Loading Dock** (`open-the-loading-dock`) — the REST APIs & Integrations course: 4 modules / 12 lessons + 4 quizzes (outbound REST, credentials/OAuth/aliases, inbound events & idempotency, import sets & data streams, spoke vs REST step, monitoring)
+- [x] **Made every lab runnable (12 Oct 2026):** *Open the Loading Dock* rewired to live public sandboxes (DummyJSON / httpbin / Duende OAuth / Open-Meteo) with concrete expected results; shared **`/lab-setup`** page added (nav + course banner); ChatGPT lesson given a no-key mock path
 - [ ] Review lesson wording/walkthroughs in-app and tune as needed
 - [ ] Add content for pre-seeded courses (ITOM, Service Mapping) so they aren't empty
 - [ ] Course thumbnails: current cards use gradient placeholders; replace with per-course `static/images/<slug>.jpg`
@@ -363,6 +403,16 @@ python serve.py
 - First large sync in a while: untracked generated files (`.DS_Store`, `__pycache__`, `instance/*.db`), git-ignored the source training docs (`Admin & Dev Aug-Sep/`), committed **`0fe730f`** (143 files) and pushed to **`origin/Initial-Dev`**.
 
 **Still open:** a *stable* public URL (deploy to PythonAnywhere per `DEPLOY.md`); the account setup is the user's step.
+
+---
+
+## Recent Work — 12 Oct 2026 (Lab runnability pass)
+
+**Goal:** make every hands-on lab actually executable.
+
+- **Review finding:** *Open the Loading Dock* used fictional hosts (`api.shipping.example`, `auth.shipping.example`), so no integration lab could run; the ChatGPT lesson required a **paid** OpenAI key. The other four courses are PDI-only and were already runnable.
+- **Fix:** rewrote the integration labs against verified free public sandboxes (DummyJSON, httpbin, Duende demo OAuth, Open-Meteo) with concrete expected results; added the shared **`/lab-setup`** page (top nav + banner on every course page); gave the ChatGPT lesson a **no-key mock path**.
+- **Detail:** see the "Lab Runnability & the Practice Ground" section above.
 
 ---
 

@@ -45,7 +45,7 @@ if (response.getStatusCode() === 200) {
         gs.error('Partner returned non-JSON for ' + trackingNumber + ': ' + response.getBody());
         return null;
     }
-    return data.status;   // e.g. "out_for_delivery"
+    return data.totalQuantity;   // the parcels on this van's manifest (sandbox field)
 }
 
 if (response.getStatusCode() === 404) {
@@ -57,7 +57,7 @@ gs.error('Partner call failed (' + response.getStatusCode() + ') for ' + trackin
 return null;
 ```
 
-**Never** assume a field exists. `data.status` can be `undefined`; check before you write it to a record.
+**Never** assume a field exists. `data.totalQuantity` can be `undefined`; check before you write it to a record.
 
 ## Writing the Result Back
 
@@ -65,12 +65,14 @@ Once parsed, update GlidePort's own record — but only with good data:
 
 ```js
 var partner = new DeliveryUtils().getTrackingStatus(order.getValue('u_tracking_number'));
-if (partner && partner.status) {
-    order.setValue('u_partner_status', partner.status);
+if (partner && partner.parcels != null) {
+    order.setValue('u_parcel_count', partner.parcels);
     order.setValue('u_last_sync', new GlideDateTime());
     order.update();
 }
 ```
+
+*(Have `getTrackingStatus` return the parsed `parcels` count so the caller only writes **good** data.)*
 
 ## Retries and Backoff
 
@@ -107,7 +109,7 @@ Include the **partner**, the **resource id**, and the **status code** — enough
 1. Extend `getTrackingStatus` to branch on the status code (`200` / `404` / `other`).
 2. Parse JSON safely with a `try/catch`, and log a warning on non-JSON.
 3. Update an order's `u_partner_status` only when the parse succeeded.
-4. Simulate failures: point the endpoint at one that returns `404` and one that returns `500`; confirm each is handled without throwing.
+4. Simulate failures: repoint the method's endpoint at `https://httpbin.org/status/404`, run it, then repoint at `https://httpbin.org/status/500`; confirm each is handled without throwing. For a *real* not-found on the data endpoint, call the sandbox with an unknown id: `https://dummyjson.com/carts/99999`.
 5. Open **Outbound HTTP Requests** log and find your calls.
 
 **Check your work:** `200` updates the order; `404` logs a warning and returns `unknown`; `5xx` logs an error; nothing throws an uncaught exception.

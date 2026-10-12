@@ -7,9 +7,11 @@
 Without aliases, every integration points at a hardcoded URL and a hardcoded credential:
 
 ```
-Dev  REST Message → https://sandbox.shipping.example  + dev key
-Prod REST Message → https://api.shipping.example       + prod key
+Dev  REST Message → https://dummyjson.com                 + dev credential
+Prod REST Message → https://jsonplaceholder.typicode.com  + prod credential
 ```
+
+> Two live sandboxes stand in for dev and prod here so you can *watch* a call follow its alias (see [Lab Setup](/lab-setup)). In a real shop these would be the partner's sandbox and live hosts.
 
 Multiply by every partner × every method × every environment, and you have a maintenance nightmare. Change the prod URL and you're editing dozens of records.
 
@@ -45,7 +47,7 @@ Using one in a script:
 
 ```js
 var request = new sn_ws.RESTMessageV2();
-request.setEndpoint('https://api.shipping.example/v1/track/' + tracking);
+request.setEndpoint('https://dummyjson.com/carts/' + tracking);
 request.setHttpMethod('get');
 request.setAuthenticationProfile('basic', 'shipping-api');   // alias name/id
 var response = request.execute();
@@ -75,11 +77,11 @@ A plain credential protects the secret; an alias protects the secret *and* makes
 
 ## Lab: Alias the Partner
 
-1. Create a **Connection** `Shipping API – Connection` with the base URL.
+1. Create a **Connection** `Shipping API – Connection` with the base URL `https://dummyjson.com`.
 2. Create **Credentials** `Shipping API – Credential` with a dummy user/pass.
 3. Create a **Connection & Credential alias** named `shipping-api` combining the two.
 4. Update your outbound call to use `setAuthenticationProfile('basic', 'shipping-api')`.
-5. Simulate an environment switch: change the connection's URL and confirm the caller follows it with no code change.
+5. Simulate an environment switch: repoint the connection's URL to `https://jsonplaceholder.typicode.com` and call again — confirm the call now goes to the *new* host with **no code change** (check the Outbound HTTP log).
 
 **Check your work:** the integration references one alias by name; no URL or secret is hardcoded, and repointing the alias changes where the call goes.
 

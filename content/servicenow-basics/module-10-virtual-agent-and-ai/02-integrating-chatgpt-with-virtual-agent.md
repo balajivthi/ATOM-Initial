@@ -13,6 +13,11 @@ User in Service Portal chat
                                                           └── answer back up the chain
 ```
 
+> **No API key? You can still finish this lab.**
+> - **Mock the model (no key, no signup).** Build the *exact same* chain but point the REST Message at `https://httpbin.org/post` — it echoes the JSON you send, so you can prove the whole **REST → Script Include → Action → Topic** plumbing works, then swap in OpenAI when you have a key. For this route, have the Script Include read `body.json.prompt` instead of `choices[0].message.content`.
+> - **Free model tiers.** [Groq](https://groq.com) and [OpenRouter](https://openrouter.ai) hand out free API keys and speak the same OpenAI-compatible `/chat/completions` shape — only the endpoint URL and key change.
+> - **A local model (e.g. Ollama) will not work here:** a cloud PDI cannot reach `localhost` on your laptop (you'd need a MID server or a public tunnel).
+
 ## Step 1: Get an OpenAI API Key
 
 1. Sign up at [platform.openai.com](https://platform.openai.com).
@@ -134,6 +139,7 @@ Wrap the script call in a reusable **Action** so the Virtual Agent can invoke it
 | 404 / 405 | Wrong endpoint or HTTP method (must be POST `/v1/chat/completions`) |
 | 400 Bad Request | Body format wrong — ensure `messages` array with `role` + `content` |
 | Empty answer | Wrong JSON path — answer lives in `choices[0].message.content` |
+| Building it without a key | Point the REST Message at `https://httpbin.org/post` and read `body.json.prompt` — see the callout at the top of this lesson |
 | Topic doesn't trigger | Assistant/topic not **published**, or NLU not matched |
 
 ## Key Takeaways
